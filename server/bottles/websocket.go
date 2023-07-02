@@ -26,6 +26,7 @@ func websocketHandlerFunc(bn *binn.Binn, logger *log.Logger) http.HandlerFunc {
 			bn.Subscribe(func(b *binn.Bottle) bool {
 				select {
 				case <-r.Context().Done():
+					close(closed)
 					return false
 				default:
 				}
@@ -40,6 +41,7 @@ func websocketHandlerFunc(bn *binn.Binn, logger *log.Logger) http.HandlerFunc {
 			case <-r.Context().Done():
 			case <-closed:
 			}
+			return
 		}).ServeHTTP(w, r)
 	}
 }

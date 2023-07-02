@@ -29,9 +29,6 @@ func getStreamHandlerFunc(bn *binn.Binn, logger *log.Logger) http.HandlerFunc {
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
-		if logger != nil {
-			logger.Printf("[out] connected")
-		}
 		enc := json.NewEncoder(w)
 		closed := make(chan struct{}, 0)
 		bn.Subscribe(func(b *binn.Bottle) bool {
@@ -47,19 +44,12 @@ func getStreamHandlerFunc(bn *binn.Binn, logger *log.Logger) http.HandlerFunc {
 				return false
 			}
 			flusher.Flush()
-			if logger != nil {
-				logger.Printf("[out] {\"message\": \"%s\"}\n", b.Msg)
-			}
-			flusher.Flush()
 			return true
 		})
 
 		select {
 		case <-r.Context().Done():
 		case <-closed:
-		}
-		if logger != nil {
-			logger.Printf("[out] disconnected")
 		}
 		return
 	}

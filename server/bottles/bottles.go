@@ -7,13 +7,14 @@ import (
 
 	"github.com/nbskp/binn-server/binn"
 	"github.com/nbskp/binn-server/server/bottles/request"
+	"github.com/nbskp/binn-server/server/middleware"
 )
 
 func NewBottlesMux(bn *binn.Binn, logger *log.Logger) *http.ServeMux {
 	r := http.NewServeMux()
 	r.HandleFunc("/", bottlesHandlerFunc(bn, logger))
-	r.HandleFunc("/stream", StreamHandlerFunc(bn, logger))
-	r.HandleFunc("/ws", WebsocketHandlerFunc(bn, logger))
+	r.Handle("/stream", middleware.LogConnectionEventMiddleware(StreamHandlerFunc(bn, logger), logger))
+	r.Handle("/ws", middleware.LogConnectionEventMiddleware(WebsocketHandlerFunc(bn, logger), logger))
 	return r
 }
 
