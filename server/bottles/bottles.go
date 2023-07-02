@@ -6,24 +6,18 @@ import (
 	"net/http"
 
 	"github.com/nbskp/binn-server/binn"
+	"github.com/nbskp/binn-server/server/bottles/request"
 )
 
-type request struct {
-	ID    string `json:"id"`
-	Msg   string `json:"msg"`
-	Token string `json:"token"`
+func NewBottlesMux(bn *binn.Binn, logger *log.Logger) *http.ServeMux {
+	r := http.NewServeMux()
+	r.HandleFunc("/", bottlesHandlerFunc(bn, logger))
+	r.HandleFunc("/stream", StreamHandlerFunc(bn, logger))
+	return r
 }
 
-func (r *request) toBottle() *binn.Bottle {
-	return &binn.Bottle{
-		ID:    r.ID,
-		Msg:   r.Msg,
-		Token: r.Token,
-	}
-}
-
-func HandlerFunc(bn *binn.Binn, logger *log.Logger) http.HandlerFunc {
-	postHf := postHandlerFunc(bn, logger)
+func bottlesHandlerFunc(bn *binn.Binn, logger *log.Logger) http.HandlerFunc {
+	postHf := postBottlesHandlerFunc(bn, logger)
 	return func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case http.MethodPost:
@@ -34,16 +28,16 @@ func HandlerFunc(bn *binn.Binn, logger *log.Logger) http.HandlerFunc {
 	}
 }
 
-func postHandlerFunc(bn *binn.Binn, logger *log.Logger) http.HandlerFunc {
+func postBottlesHandlerFunc(bn *binn.Binn, logger *log.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var reqBody request
+		var reqBody request.Request
 		dec := json.NewDecoder(r.Body)
 		if err := dec.Decode(&reqBody); err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			logger.Println(err)
 			return
 		}
-		if err := bn.Publish(reqBody.toBottle()); err != nil {
+		if err := bn.Publish(reqBody.ToBottle()); err != nil {
 			logger.Println(err)
 			w.WriteHeader(http.StatusBadRequest)
 			return

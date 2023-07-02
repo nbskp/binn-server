@@ -1,4 +1,4 @@
-package stream
+package bottles
 
 import (
 	"encoding/json"
@@ -6,26 +6,11 @@ import (
 	"net/http"
 
 	"github.com/nbskp/binn-server/binn"
+	"github.com/nbskp/binn-server/server/bottles/response"
 )
 
-type response struct {
-	ID        string `json:"id"`
-	Msg       string `json:"message"`
-	Token     string `json:"token"`
-	ExpiredAt int64  `json:"expired_at"`
-}
-
-func toResponse(b *binn.Bottle) *response {
-	return &response{
-		ID:        b.ID,
-		Msg:       b.Msg,
-		Token:     b.Token,
-		ExpiredAt: b.ExpiredAt,
-	}
-}
-
-func HandlerFunc(bn *binn.Binn, logger *log.Logger) http.HandlerFunc {
-	hf := GetHandlerFunc(bn, logger)
+func StreamHandlerFunc(bn *binn.Binn, logger *log.Logger) http.HandlerFunc {
+	hf := getStreamHandlerFunc(bn, logger)
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodGet {
 			hf(w, r)
@@ -35,7 +20,7 @@ func HandlerFunc(bn *binn.Binn, logger *log.Logger) http.HandlerFunc {
 	}
 }
 
-func GetHandlerFunc(bn *binn.Binn, logger *log.Logger) http.HandlerFunc {
+func getStreamHandlerFunc(bn *binn.Binn, logger *log.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 		flusher, ok := w.(http.Flusher)
@@ -56,7 +41,7 @@ func GetHandlerFunc(bn *binn.Binn, logger *log.Logger) http.HandlerFunc {
 			default:
 			}
 
-			if err := enc.Encode(toResponse(b)); err != nil {
+			if err := enc.Encode(response.ToResponse(b)); err != nil {
 				w.WriteHeader(http.StatusInternalServerError)
 				closed <- struct{}{}
 				return false

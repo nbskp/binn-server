@@ -7,14 +7,12 @@ import (
 	"github.com/nbskp/binn-server/binn"
 	"github.com/nbskp/binn-server/server/bottles"
 	"github.com/nbskp/binn-server/server/ping"
-	"github.com/nbskp/binn-server/server/stream"
 )
 
 func New(bn *binn.Binn, addr string, logger *log.Logger) *http.Server {
 	r := http.NewServeMux()
-	r.HandleFunc("/bottles/stream", stream.HandlerFunc(bn, logger))
-	r.HandleFunc("/bottles", bottles.HandlerFunc(bn, logger))
 	r.HandleFunc("/ping", ping.HandlerFunc())
+	r.Handle("/bottles/", http.StripPrefix("/bottles", bottles.NewBottlesMux(bn, logger)))
 
 	return &http.Server{
 		Addr:    addr,
