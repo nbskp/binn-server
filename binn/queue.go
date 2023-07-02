@@ -34,7 +34,6 @@ func NewBottleQueue(size int, expiration time.Duration) *bottleQueue {
 	sbs := make([]statefulBottle, size)
 	for i := 0; i < size; i++ {
 		sbs[i].bottle = &Bottle{ID: strconv.Itoa(i), Msg: "", Token: "", ExpiredAt: 0}
-		sbs[i].bottle.ID = strconv.Itoa(i)
 		sbs[i].state = stateAvailable
 	}
 	return &bottleQueue{
@@ -71,8 +70,8 @@ func (bq *bottleQueue) Push(b *Bottle) error {
 func (bq *bottleQueue) Pop() (*Bottle, error) {
 	var sb *statefulBottle
 	for i := 0; i < bq.size; i++ {
-		if sb := &bq.sbs[bq.cnt%bq.size]; sb.state == stateAvailable || (sb.state == stateUnavailable && sb.bottle.IsExpired()) {
-			sb = sb
+		if sb_ := &bq.sbs[bq.cnt%bq.size]; sb_.state == stateAvailable || (sb_.state == stateUnavailable && sb_.bottle.IsExpired()) {
+			sb = sb_
 			bq.cnt++
 			break
 		} else {
