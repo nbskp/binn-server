@@ -13,6 +13,7 @@ func NewBottlesMux(bn *binn.Binn, logger *log.Logger) *http.ServeMux {
 	r := http.NewServeMux()
 	r.HandleFunc("/", bottlesHandlerFunc(bn, logger))
 	r.HandleFunc("/stream", StreamHandlerFunc(bn, logger))
+	r.HandleFunc("/ws", WebsocketHandlerFunc(bn, logger))
 	return r
 }
 
