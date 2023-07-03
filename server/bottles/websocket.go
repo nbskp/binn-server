@@ -3,22 +3,22 @@ package bottles
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 
 	"github.com/nbskp/binn-server/binn"
 	"github.com/nbskp/binn-server/server/bottles/response"
+	"golang.org/x/exp/slog"
 	"golang.org/x/net/websocket"
 )
 
-func WebsocketHandlerFunc(bn *binn.Binn, logger *log.Logger) http.HandlerFunc {
+func WebsocketHandlerFunc(bn *binn.Binn, logger *slog.Logger) http.HandlerFunc {
 	hf := websocketHandlerFunc(bn, logger)
 	return func(w http.ResponseWriter, r *http.Request) {
 		hf(w, r)
 	}
 }
 
-func websocketHandlerFunc(bn *binn.Binn, logger *log.Logger) http.HandlerFunc {
+func websocketHandlerFunc(bn *binn.Binn, logger *slog.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		websocket.Handler(func(ws *websocket.Conn) {
 			enc := json.NewEncoder(ws)

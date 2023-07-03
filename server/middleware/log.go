@@ -1,18 +1,19 @@
 package middleware
 
 import (
-	"log"
 	"net/http"
+
+	"golang.org/x/exp/slog"
 )
 
-func LogConnectionEventMiddleware(next http.HandlerFunc, logger *log.Logger) http.Handler {
+func LogConnectionEventMiddleware(next http.HandlerFunc, logger *slog.Logger) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if logger != nil {
-			logger.Printf(`{"type":"connection","event":"connected"}`)
+			logger.Info("connected", "type", "connection", "event", "connected")
 		}
 		next(w, r)
 		if logger != nil {
-			logger.Printf(`{"type:"connection","event":"disconnected"}`)
+			logger.Info("disconnected", "type", "connection", "event", "disconnected")
 		}
 	})
 }

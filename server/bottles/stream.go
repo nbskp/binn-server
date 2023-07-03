@@ -2,14 +2,14 @@ package bottles
 
 import (
 	"encoding/json"
-	"log"
 	"net/http"
 
 	"github.com/nbskp/binn-server/binn"
 	"github.com/nbskp/binn-server/server/bottles/response"
+	"golang.org/x/exp/slog"
 )
 
-func StreamHandlerFunc(bn *binn.Binn, logger *log.Logger) http.HandlerFunc {
+func StreamHandlerFunc(bn *binn.Binn, logger *slog.Logger) http.HandlerFunc {
 	hf := getStreamHandlerFunc(bn, logger)
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodGet {
@@ -20,12 +20,12 @@ func StreamHandlerFunc(bn *binn.Binn, logger *log.Logger) http.HandlerFunc {
 	}
 }
 
-func getStreamHandlerFunc(bn *binn.Binn, logger *log.Logger) http.HandlerFunc {
+func getStreamHandlerFunc(bn *binn.Binn, logger *slog.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 		flusher, ok := w.(http.Flusher)
 		if !ok {
-			logger.Printf("failed to cast to flusher")
+			logger.Error("failed to cast to flusher")
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}

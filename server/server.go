@@ -1,15 +1,15 @@
 package server
 
 import (
-	"log"
 	"net/http"
 
 	"github.com/nbskp/binn-server/binn"
 	"github.com/nbskp/binn-server/server/bottles"
 	"github.com/nbskp/binn-server/server/ping"
+	"golang.org/x/exp/slog"
 )
 
-func New(bn *binn.Binn, addr string, logger *log.Logger) *http.Server {
+func New(bn *binn.Binn, addr string, logger *slog.Logger) *http.Server {
 	r := http.NewServeMux()
 	r.HandleFunc("/ping", ping.HandlerFunc())
 	r.Handle("/bottles/", http.StripPrefix("/bottles", bottles.NewBottlesMux(bn, logger)))
