@@ -5,7 +5,6 @@ import (
 	"net/http"
 
 	"github.com/nbskp/binn-server/binn"
-	"github.com/nbskp/binn-server/logutil"
 	"github.com/nbskp/binn-server/server/bottles/request"
 	"github.com/nbskp/binn-server/server/middleware"
 	"golang.org/x/exp/slog"
@@ -37,12 +36,12 @@ func postBottlesHandlerFunc(bn *binn.Binn, logger *slog.Logger) http.HandlerFunc
 		dec := json.NewDecoder(r.Body)
 		if err := dec.Decode(&reqBody); err != nil {
 			w.WriteHeader(http.StatusBadRequest)
-			logutil.LogWithID(r.Context(), logger.Error, err.Error())
+			logger.ErrorCtx(r.Context(), err.Error())
 			return
 		}
 		if err := bn.Publish(reqBody.ToBottle()); err != nil {
 			w.WriteHeader(http.StatusBadRequest)
-			logutil.LogWithID(r.Context(), logger.Error, err.Error())
+			logger.ErrorCtx(r.Context(), err.Error())
 			return
 		}
 		w.WriteHeader(http.StatusOK)
