@@ -2,9 +2,11 @@ package bottles
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"github.com/nbskp/binn-server/binn"
+	"github.com/nbskp/binn-server/logutil"
 	"github.com/nbskp/binn-server/server/bottles/response"
 	"golang.org/x/exp/slog"
 )
@@ -25,7 +27,7 @@ func getStreamHandlerFunc(bn *binn.Binn, logger *slog.Logger) http.HandlerFunc {
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 		flusher, ok := w.(http.Flusher)
 		if !ok {
-			logger.Error("failed to cast to flusher")
+			logger.ErrorCtx(r.Context(), "failed to cast http.ResponseWriter to flusher")
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
@@ -39,11 +41,13 @@ func getStreamHandlerFunc(bn *binn.Binn, logger *slog.Logger) http.HandlerFunc {
 			}
 
 			if err := enc.Encode(response.ToResponse(b)); err != nil {
+				logger.ErrorCtx(r.Context(), fmt.Sprintf("failed to encode a bottle: %v", err.Error()))
 				w.WriteHeader(http.StatusInternalServerError)
 				closed <- struct{}{}
 				return false
 			}
 			flusher.Flush()
+			logger.InfoCtx(r.Context(), "send a bottle", logutil.AttrBottle(b), logutil.AttrEventSendBottle())
 			return true
 		})
 

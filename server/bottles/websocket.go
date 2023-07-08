@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/nbskp/binn-server/binn"
+	"github.com/nbskp/binn-server/logutil"
 	"github.com/nbskp/binn-server/server/bottles/response"
 	"golang.org/x/exp/slog"
 	"golang.org/x/net/websocket"
@@ -31,10 +32,11 @@ func websocketHandlerFunc(bn *binn.Binn, logger *slog.Logger) http.HandlerFunc {
 				default:
 				}
 				if err := enc.Encode(response.ToResponse(b)); err != nil {
-					fmt.Println(err)
+					logger.ErrorCtx(r.Context(), fmt.Sprintf("failed to encode a bottle: %v", err.Error()))
 					close(closed)
 					return false
 				}
+				logger.InfoCtx(r.Context(), "send a bottle", logutil.AttrBottle(b), logutil.AttrEventSendBottle())
 				return true
 			})
 			select {
