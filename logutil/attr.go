@@ -19,6 +19,10 @@ const (
 	attrBottleMsgKey       = "msg"
 	attrBottleTokenKey     = "token"
 	attrBottleExpiredAtKey = "expired_at"
+
+	attrHTTPKey       = "http"
+	attrHTTPMethodKey = "method"
+	attrHTTPPathKey   = "path"
 )
 
 func AttrEventConnected() slog.Attr {
@@ -47,5 +51,12 @@ func AttrBottle(b *binn.Bottle) slog.Attr {
 		slog.String(attrBottleMsgKey, b.Msg),
 		slog.String(attrBottleTokenKey, b.Msg),
 		slog.Int64(attrBottleExpiredAtKey, b.ExpiredAt),
+	)
+}
+
+func AttrHTTP(method string, path string) slog.Attr {
+	return slog.Group(attrHTTPKey,
+		slog.String(attrHTTPMethodKey, method),
+		slog.String(attrHTTPPathKey, path),
 	)
 }

@@ -21,7 +21,7 @@ func newHandler(bn *binn.Binn, logger *slog.Logger) http.Handler {
 	r := http.NewServeMux()
 	r.Handle("/ping", http.HandlerFunc(ping.HandlerFunc()))
 	r.Handle("/bottles/", http.StripPrefix("/bottles", bottles.NewBottlesMux(bn, logger)))
-	return middleware.IDMiddleware(r, logger)
+	return middleware.HTTPInfoMiddleware(middleware.IDMiddleware(r, logger))
 }
 
 func corsMiddleware(next http.Handler) http.Handler {
