@@ -28,8 +28,7 @@ func (h *ctxHandler) WithGroup(name string) slog.Handler {
 }
 
 func (h *ctxHandler) Handle(ctx context.Context, r slog.Record) error {
-	attrs := ctxutil.LogAttrs(ctx)
-	return h.baseHandler.WithAttrs(attrs).Handle(ctx, r)
+	return h.baseHandler.WithAttrs(ctxutil.LogAttrs(ctx)).Handle(ctx, r)
 }
 
 func NewCtxHandler(h slog.Handler) *ctxHandler {

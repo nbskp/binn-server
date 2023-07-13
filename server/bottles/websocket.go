@@ -1,15 +1,16 @@
 package bottles
 
 import (
+	"context"
 	"encoding/json"
-	"fmt"
+	"log"
 	"net/http"
+	"time"
 
 	"github.com/nbskp/binn-server/binn"
 	"github.com/nbskp/binn-server/logutil"
-	"github.com/nbskp/binn-server/server/bottles/response"
 	"golang.org/x/exp/slog"
-	"golang.org/x/net/websocket"
+	"nhooyr.io/websocket"
 )
 
 func WebsocketHandlerFunc(bn *binn.Binn, logger *slog.Logger) http.HandlerFunc {
@@ -20,30 +21,50 @@ func WebsocketHandlerFunc(bn *binn.Binn, logger *slog.Logger) http.HandlerFunc {
 }
 
 func websocketHandlerFunc(bn *binn.Binn, logger *slog.Logger) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		websocket.Handler(func(ws *websocket.Conn) {
-			enc := json.NewEncoder(ws)
-			closed := make(chan struct{}, 0)
-			bn.Subscribe(func(b *binn.Bottle) bool {
-				select {
-				case <-r.Context().Done():
-					close(closed)
-					return false
-				default:
-				}
-				if err := enc.Encode(response.ToResponse(b)); err != nil {
-					logger.ErrorCtx(r.Context(), fmt.Sprintf("failed to encode a bottle: %v", err.Error()))
-					close(closed)
-					return false
-				}
-				logger.InfoCtx(r.Context(), "send a bottle", logutil.AttrBottle(b), logutil.AttrEventSendBottle())
-				return true
-			})
-			select {
-			case <-r.Context().Done():
-			case <-closed:
-			}
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		c, err := websocket.Accept(w, r, nil)
+		if err != nil {
+			log.Println(err)
 			return
-		}).ServeHTTP(w, r)
-	}
+		}
+		defer c.Close(websocket.StatusInternalError, "the sky is falling")
+
+		ctx, cancel := context.WithTimeout(r.Context(), time.Minute*10)
+		defer cancel()
+
+		ctx = c.CloseRead(ctx)
+
+		ch := make(chan struct{}, 0)
+
+		bn.Subscribe(func(b *binn.Bottle) bool {
+			select {
+			case <-ctx.Done():
+				close(ch)
+				return false
+			default:
+			}
+
+			wr, err := c.Writer(ctx, websocket.MessageText)
+			if err != nil {
+				log.Println(err)
+				close(ch)
+				return false
+			}
+			err = json.NewEncoder(wr).Encode(b)
+			if err != nil {
+				log.Println(err)
+				close(ch)
+				return false
+			}
+			logger.Info("emit bottle", logutil.AttrBottle(b))
+			wr.Close()
+			return true
+		})
+
+		select {
+		case <-ctx.Done():
+		case <-ch:
+		}
+	})
+
 }
