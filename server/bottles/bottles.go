@@ -16,6 +16,8 @@ func NewBottlesMux(bn *binn.Binn, logger *slog.Logger) *http.ServeMux {
 	r.Handle("/", http.HandlerFunc(bottlesHandlerFunc(bn, logger)))
 	r.Handle("/stream", middleware.LogConnectionEventMiddleware(StreamHandlerFunc(bn, logger), logger))
 	r.Handle("/ws", middleware.LogConnectionEventMiddleware(WebsocketHandlerFunc(bn, logger), logger))
+
+	r.Handle("/subscriptions/", http.StripPrefix("/subscriptions", newSubscriptionsMux(bn, logger)))
 	return r
 }
 
