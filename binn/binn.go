@@ -71,20 +71,21 @@ func (bn *Binn) emitLoop(ctx context.Context) {
 	}
 }
 
-func (bn *Binn) Emit() {
+func (bn *Binn) Emit() error {
 	if lh := len(bn.handlers); lh == 0 {
-		return
+		return errors.New("no handlers")
 	}
 	b, err := bn.bottleQueue.Pop()
 	if err != nil {
-		return
+		return err
 	}
 	fn := bn.handlers[0]
 	bn.handlers = bn.handlers[1:]
 
 	if ok := fn(b); !ok {
 		_ = bn.bottleQueue.Push(b)
-		return
+		return errors.New("failed to handle a bottle")
 	}
 	bn.handlers = append(bn.handlers, fn)
+	return nil
 }

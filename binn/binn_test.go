@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 type stubQueue struct{}
@@ -34,7 +35,8 @@ func Test_Binn(t *testing.T) {
 		return true
 	})
 
-	bn.Emit()
+	err := bn.Emit()
+	require.NoError(t, err)
 	select {
 	case <-ch:
 	case <-time.After(1 * time.Second):
