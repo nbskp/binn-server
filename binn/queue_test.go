@@ -216,7 +216,7 @@ func Test_BottleQueue_Pop(t *testing.T) {
 						state:  stateAvailable,
 					},
 					{
-						bottle: &Bottle{ID: "2", Msg: "msg2", ExpiredAt: 0},
+						bottle: &Bottle{ID: "2", Msg: "msg2", ExpiredAt: nowTime.Add(1 * time.Hour).Unix()},
 						state:  stateUnavailable,
 					},
 					{
@@ -244,7 +244,7 @@ func Test_BottleQueue_Pop(t *testing.T) {
 						state:  stateUnavailable,
 					},
 					{
-						bottle: &Bottle{ID: "2", Msg: "msg2", ExpiredAt: 0},
+						bottle: &Bottle{ID: "2", Msg: "msg2", ExpiredAt: nowTime.Add(1 * time.Hour).Unix()},
 						state:  stateUnavailable,
 					},
 					{
