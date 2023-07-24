@@ -1,6 +1,8 @@
 package binn
 
 import (
+	"context"
+	"errors"
 	"time"
 )
 
@@ -10,9 +12,10 @@ type BottleQueue interface {
 }
 
 type Binn struct {
-	handlers     []handler
-	bottleQueue  BottleQueue
-	emitInterval time.Duration
+	handlers       []handler
+	bottleQueue    BottleQueue
+	emitInterval   time.Duration
+	cancelEmitLoop func()
 }
 
 func New(bottleQueue BottleQueue, emitInterval time.Duration) *Binn {
@@ -21,12 +24,7 @@ func New(bottleQueue BottleQueue, emitInterval time.Duration) *Binn {
 		bottleQueue:  bottleQueue,
 		emitInterval: emitInterval,
 	}
-	go bn.emitLoop()
 	return bn
-}
-
-func (bn *Binn) Run() {
-	go bn.emitLoop()
 }
 
 func (bn *Binn) Publish(b *Bottle) error {
@@ -43,16 +41,37 @@ func (bn *Binn) Subscribe(h handler) error {
 	return nil
 }
 
-func (bn *Binn) emitLoop() {
+func (bn *Binn) RunEmitLoop() error {
+	if bn.cancelEmitLoop != nil {
+		return errors.New("emit-loop is already running")
+	}
+	var ctx context.Context
+	ctx, bn.cancelEmitLoop = context.WithCancel(context.Background())
+	go bn.emitLoop(ctx)
+	return nil
+}
+
+func (bn *Binn) StopEmitLoop() error {
+	if bn.cancelEmitLoop == nil {
+		return errors.New("emit-loop isn't running")
+	}
+	bn.cancelEmitLoop()
+	bn.cancelEmitLoop = nil
+	return nil
+}
+
+func (bn *Binn) emitLoop(ctx context.Context) {
 	for {
 		select {
+		case <-ctx.Done():
+			return
 		case <-time.After(bn.emitInterval):
-			bn.emit()
+			bn.Emit()
 		}
 	}
 }
 
-func (bn *Binn) emit() {
+func (bn *Binn) Emit() {
 	if lh := len(bn.handlers); lh == 0 {
 		return
 	}

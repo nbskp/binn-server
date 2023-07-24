@@ -34,7 +34,7 @@ func Test_Binn(t *testing.T) {
 		return true
 	})
 
-	bn.emit()
+	bn.Emit()
 	select {
 	case <-ch:
 	case <-time.After(1 * time.Second):
