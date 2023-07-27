@@ -236,7 +236,7 @@ func Test_BottleQueue_Pop(t *testing.T) {
 				wantErrs: []assert.ErrorAssertionFunc{
 					assert.NoError,
 					assert.NoError,
-					assert.Error,
+					assert.NoError,
 				},
 				sbs: []statefulBottle{
 					{

@@ -19,7 +19,6 @@ type statefulBottle struct {
 
 func (sb *statefulBottle) reset() {
 	sb.bottle.ExpiredAt = 0
-	sb.bottle.Token = ""
 	sb.state = stateAvailable
 }
 
@@ -33,7 +32,7 @@ type bottleQueue struct {
 func NewBottleQueue(size int, expiration time.Duration) *bottleQueue {
 	sbs := make([]statefulBottle, size)
 	for i := 0; i < size; i++ {
-		sbs[i].bottle = &Bottle{ID: strconv.Itoa(i), Msg: "", Token: "", ExpiredAt: 0}
+		sbs[i].bottle = &Bottle{ID: strconv.Itoa(i), Msg: "", ExpiredAt: 0}
 		sbs[i].state = stateAvailable
 	}
 	return &bottleQueue{
@@ -79,7 +78,7 @@ func (bq *bottleQueue) Pop() (*Bottle, error) {
 		}
 	}
 	if sb == nil {
-		return nil, fmt.Errorf("no available bottles")
+		return nil, nil
 	}
 	sb.bottle.ExpiredAt = time.Now().Add(bq.expiration).Unix()
 	sb.state = stateUnavailable

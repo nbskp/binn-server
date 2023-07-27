@@ -42,3 +42,16 @@ func LogAttrs(ctx context.Context) []slog.Attr {
 		return nil
 	}
 }
+
+type keySubscriptionID struct{}
+
+func SetSubscriptionID(ctx context.Context, id string) context.Context {
+	return context.WithValue(ctx, keySubscriptionID{}, id)
+}
+func SubscriptionID(ctx context.Context) string {
+	if id, ok := ctx.Value(keySubscriptionID{}).(string); ok {
+		return id
+	} else {
+		return ""
+	}
+}

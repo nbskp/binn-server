@@ -1,11 +1,11 @@
 package binn
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 type stubQueue struct{}
@@ -18,28 +18,32 @@ func (s *stubQueue) Push(b *Bottle) error {
 	return nil
 }
 
-func Test_Binn(t *testing.T) {
+func Test_Binn_GetBottle(t *testing.T) {
+	nowTime := time.Now()
+	now = func() time.Time {
+		return nowTime
+	}
+	defer func() { now = time.Now }()
+
 	q := &stubQueue{}
+	itv := time.Duration(1)
 	bn := &Binn{
-		bottleQueue: q,
+		bq:   q,
+		subs: []*Subscription{{id: "example_id", nextTime: now().Add(itv)}},
+		itv:  itv,
 	}
 
-	ch := make(chan struct{}, 1)
-	assertFunc := func(b *Bottle) {
-		assert.Equal(t, "sample", b.Msg)
-		close(ch)
-	}
+	b, err := bn.GetBottle("example_id")
+	assert.NoError(t, err)
+	assert.Nil(t, b)
 
-	bn.Subscribe(func(b *Bottle) bool {
-		assertFunc(b)
-		return true
-	})
-
-	err := bn.Emit()
-	require.NoError(t, err)
-	select {
-	case <-ch:
-	case <-time.After(1 * time.Second):
-		assert.Fail(t, "failed to finish")
+	now = func() time.Time {
+		return nowTime.Add(time.Duration(1))
 	}
+	fmt.Println(now())
+
+	b, err = bn.GetBottle("example_id")
+	assert.NoError(t, err)
+	assert.Equal(t, &Bottle{ID: "1", Msg: "sample"}, b)
+
 }

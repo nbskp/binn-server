@@ -1,7 +1,6 @@
 package binn
 
 import (
-	"context"
 	"errors"
 	"time"
 )
@@ -12,80 +11,54 @@ type BottleQueue interface {
 }
 
 type Binn struct {
-	handlers       []handler
-	bottleQueue    BottleQueue
-	emitInterval   time.Duration
-	cancelEmitLoop func()
+	bq   BottleQueue
+	subs []*Subscription
+
+	itv time.Duration
 }
 
-func New(bottleQueue BottleQueue, emitInterval time.Duration) *Binn {
-	bn := &Binn{
-		handlers:     []handler{},
-		bottleQueue:  bottleQueue,
-		emitInterval: emitInterval,
+func NewBinn(itv time.Duration, bq BottleQueue) *Binn {
+	return &Binn{
+		bq:   bq,
+		subs: []*Subscription{},
+		itv:  itv,
 	}
-	return bn
 }
 
-func (bn *Binn) Publish(b *Bottle) error {
-	if err := bn.bottleQueue.Push(b); err != nil {
-		return err
-	}
-	return nil
+type Subscription struct {
+	id       string
+	nextTime time.Time
 }
 
-type handler func(*Bottle) bool
-
-func (bn *Binn) Subscribe(h handler) error {
-	bn.handlers = append(bn.handlers, h)
-	return nil
+func (bn *Binn) Subscribe(id string) {
+	bn.subs = append(bn.subs, &Subscription{id: id, nextTime: now().Add(bn.itv)})
 }
 
-func (bn *Binn) RunEmitLoop() error {
-	if bn.cancelEmitLoop != nil {
-		return errors.New("emit-loop is already running")
-	}
-	var ctx context.Context
-	ctx, bn.cancelEmitLoop = context.WithCancel(context.Background())
-	go bn.emitLoop(ctx)
-	return nil
-}
-
-func (bn *Binn) StopEmitLoop() error {
-	if bn.cancelEmitLoop == nil {
-		return errors.New("emit-loop isn't running")
-	}
-	bn.cancelEmitLoop()
-	bn.cancelEmitLoop = nil
-	return nil
-}
-
-func (bn *Binn) emitLoop(ctx context.Context) {
-	for {
-		select {
-		case <-ctx.Done():
-			return
-		case <-time.After(bn.emitInterval):
-			bn.Emit()
+func (bn *Binn) GetBottle(subID string) (*Bottle, error) {
+	for _, sub := range bn.subs {
+		if sub.id == subID {
+			if sub.nextTime.After(now()) {
+				return nil, nil
+			}
+			b, err := bn.bq.Pop()
+			if err != nil {
+				return nil, err
+			}
+			if b == nil {
+				return nil, nil
+			}
+			sub.nextTime = time.Now().Add(bn.itv)
+			return b, nil
 		}
 	}
+	return nil, errors.New("not found subscription")
 }
 
-func (bn *Binn) Emit() error {
-	if lh := len(bn.handlers); lh == 0 {
-		return errors.New("no handlers")
+func (bn *Binn) SetBottle(b *Bottle, subID string) error {
+	for _, sub := range bn.subs {
+		if sub.id == subID {
+			return bn.bq.Push(b)
+		}
 	}
-	b, err := bn.bottleQueue.Pop()
-	if err != nil {
-		return err
-	}
-	fn := bn.handlers[0]
-	bn.handlers = bn.handlers[1:]
-
-	if ok := fn(b); !ok {
-		_ = bn.bottleQueue.Push(b)
-		return errors.New("failed to handle a bottle")
-	}
-	bn.handlers = append(bn.handlers, fn)
-	return nil
+	return errors.New("not found subscription")
 }
