@@ -7,14 +7,26 @@ import (
 	"golang.org/x/exp/slog"
 )
 
-func LogConnectionEventMiddleware(next http.Handler, logger *slog.Logger) http.Handler {
+type loggingResponseWriter struct {
+	http.ResponseWriter
+	statusCode int
+}
+
+func (w *loggingResponseWriter) WriteHeader(statusCode int) {
+	w.statusCode = statusCode
+	w.ResponseWriter.WriteHeader(statusCode)
+}
+
+func AccessLogMiddleware(next http.Handler, logger *slog.Logger) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if logger != nil {
-			logger.InfoCtx(r.Context(), "connected", logutil.AttrEventConnected())
+		w_ := &loggingResponseWriter{
+			w,
+			http.StatusOK,
 		}
-		next.ServeHTTP(w, r)
-		if logger != nil {
-			logger.InfoCtx(r.Context(), "disconnected", logutil.AttrEventDisconnected())
-		}
+		next.ServeHTTP(w_, r)
+
+		logger.InfoCtx(r.Context(), "ok",
+			logutil.AttrHTTP(r.Method, r.URL.String(), w_.statusCode),
+		)
 	})
 }

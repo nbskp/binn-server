@@ -3,6 +3,7 @@ package ctxutil
 import (
 	"context"
 
+	"github.com/nbskp/binn-server/binn"
 	"golang.org/x/exp/slog"
 )
 
@@ -53,5 +54,19 @@ func SubscriptionID(ctx context.Context) string {
 		return id
 	} else {
 		return ""
+	}
+}
+
+type keyBottle struct{}
+
+func SetBottle(ctx context.Context, b *binn.Bottle) context.Context {
+	return context.WithValue(ctx, keyBottle{}, b)
+}
+
+func Bottle(ctx context.Context) *binn.Bottle {
+	if b, ok := ctx.Value(keyBottle{}).(*binn.Bottle); ok {
+		return b
+	} else {
+		return nil
 	}
 }
