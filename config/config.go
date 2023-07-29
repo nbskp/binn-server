@@ -7,18 +7,18 @@ import (
 )
 
 const (
-	envSendInterval = "BINN_SEND_INTERVAL_SEC"
-	envRunEmitLoop  = "BINN_RUN_EMIT_LOOP"
+	envSendInterval           = "BINN_SEND_INTERVAL_SEC"
+	envSubscriptionExpiration = "BINN_SUBSCRIPTION_EXPIRATION_SEC"
 )
 
 var (
-	defaultSendInterval = 10 * time.Second
-	defaultRunEmitLoop  = true
+	defaultSendInterval           = 10 * time.Second
+	defaultSubscriptionExpiration = 60 * 15 * time.Second
 )
 
 type Config struct {
-	RunEmitLoop  bool
-	SendInterval time.Duration
+	SendInterval           time.Duration
+	SubscriptionExpiration time.Duration
 }
 
 func NewFromEnv() Config {
@@ -31,10 +31,12 @@ func NewFromEnv() Config {
 		c.SendInterval = time.Duration(i) * time.Second
 	}
 
-	if v := os.Getenv(envRunEmitLoop); v == "false" {
-		c.RunEmitLoop = false
+	se, err := strconv.Atoi(os.Getenv(envSubscriptionExpiration))
+	if err != nil {
+		c.SubscriptionExpiration = defaultSubscriptionExpiration
 	} else {
-		c.RunEmitLoop = defaultRunEmitLoop
+		c.SubscriptionExpiration = time.Duration(se) * time.Second
 	}
+
 	return c
 }

@@ -27,10 +27,18 @@ func Test_Binn_GetBottle(t *testing.T) {
 
 	q := &stubQueue{}
 	itv := time.Duration(1)
+	subExp := time.Duration(10)
 	bn := &Binn{
-		bq:   q,
-		subs: []*Subscription{{id: "example_id", nextTime: now().Add(itv), bottleIDs: map[string]struct{}{}}},
-		itv:  itv,
+		bq: q,
+		subs: map[string]*Subscription{
+			"example_id": {
+				id:        "example_id",
+				expiredAt: now().Add(subExp),
+				nextTime:  now().Add(itv),
+				bottleIDs: map[string]struct{}{},
+			},
+		},
+		itv: itv,
 	}
 
 	b, err := bn.GetBottle("example_id")
@@ -56,10 +64,18 @@ func Test_binn_Publish(t *testing.T) {
 
 	q := &stubQueue{}
 	itv := time.Duration(1)
+	subExp := time.Duration(10)
 	bn := &Binn{
-		bq:   q,
-		subs: []*Subscription{{id: "example_id", nextTime: now().Add(itv), bottleIDs: map[string]struct{}{"1": struct{}{}}}},
-		itv:  itv,
+		bq: q,
+		subs: map[string]*Subscription{
+			"example_id": {
+				id:        "example_id",
+				expiredAt: now().Add(subExp),
+				nextTime:  now().Add(itv),
+				bottleIDs: map[string]struct{}{"1": struct{}{}},
+			},
+		},
+		itv: itv,
 	}
 
 	err := bn.Publish("example_id", &Bottle{ID: "1", Msg: "sample"})

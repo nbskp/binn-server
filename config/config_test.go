@@ -9,8 +9,8 @@ import (
 
 func TestNewFromEnv(t *testing.T) {
 	type args struct {
-		envRunEmitLoop string
-		envIntervalSec string
+		envIntervalSec               string
+		envSubscriptionExpirationSec string
 	}
 	cases := []struct {
 		name     string
@@ -20,30 +20,30 @@ func TestNewFromEnv(t *testing.T) {
 		{
 			name: "env is filled",
 			args: args{
-				envRunEmitLoop: "false",
-				envIntervalSec: "30",
+				envIntervalSec:               "30",
+				envSubscriptionExpirationSec: "10",
 			},
 			expected: Config{
-				RunEmitLoop:  false,
-				SendInterval: 30 * time.Second,
+				SendInterval:           30 * time.Second,
+				SubscriptionExpiration: 10 * time.Second,
 			},
 		},
 		{
 			name: "env is not filled",
 			args: args{
-				envRunEmitLoop: "",
-				envIntervalSec: "",
+				envIntervalSec:               "",
+				envSubscriptionExpirationSec: "",
 			},
 			expected: Config{
-				RunEmitLoop:  true,
-				SendInterval: 10 * time.Second,
+				SendInterval:           10 * time.Second,
+				SubscriptionExpiration: 60 * 15 * time.Second,
 			},
 		},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			t.Setenv("BINN_RUN_EMIT_LOOP", c.args.envRunEmitLoop)
 			t.Setenv("BINN_SEND_INTERVAL_SEC", c.args.envIntervalSec)
+			t.Setenv("BINN_SUBSCRIPTION_EXPIRATION_SEC", c.args.envSubscriptionExpirationSec)
 			cfg := NewFromEnv()
 			assert.Equal(t, c.expected, cfg)
 		})
