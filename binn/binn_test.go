@@ -29,7 +29,7 @@ func Test_Binn_GetBottle(t *testing.T) {
 	itv := time.Duration(1)
 	bn := &Binn{
 		bq:   q,
-		subs: []*Subscription{{id: "example_id", nextTime: now().Add(itv)}},
+		subs: []*Subscription{{id: "example_id", nextTime: now().Add(itv), bottleIDs: map[string]struct{}{}}},
 		itv:  itv,
 	}
 
@@ -45,5 +45,29 @@ func Test_Binn_GetBottle(t *testing.T) {
 	b, err = bn.GetBottle("example_id")
 	assert.NoError(t, err)
 	assert.Equal(t, &Bottle{ID: "1", Msg: "sample"}, b)
+}
 
+func Test_binn_Publish(t *testing.T) {
+	nowTime := time.Now()
+	now = func() time.Time {
+		return nowTime
+	}
+	defer func() { now = time.Now }()
+
+	q := &stubQueue{}
+	itv := time.Duration(1)
+	bn := &Binn{
+		bq:   q,
+		subs: []*Subscription{{id: "example_id", nextTime: now().Add(itv), bottleIDs: map[string]struct{}{"1": struct{}{}}}},
+		itv:  itv,
+	}
+
+	err := bn.Publish("example_id", &Bottle{ID: "1", Msg: "sample"})
+	assert.NoError(t, err)
+
+	err = bn.Publish("example_id", &Bottle{ID: "2", Msg: "sample"})
+	assert.Error(t, err)
+
+	err = bn.Publish("example_id", &Bottle{ID: "1", Msg: "sample"})
+	assert.Error(t, err)
 }

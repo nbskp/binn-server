@@ -68,7 +68,7 @@ func postBottlesHandlerFunc(bn *binn.Binn, logger *slog.Logger) http.HandlerFunc
 		}
 		b := reqBody.ToBottle()
 		subID := ctxutil.SubscriptionID(r.Context())
-		if err := bn.SetBottle(b, subID); err != nil {
+		if err := bn.Publish(subID, b); err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			logger.ErrorCtx(r.Context(), err.Error())
 			return

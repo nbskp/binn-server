@@ -28,10 +28,12 @@ func NewBinn(itv time.Duration, bq BottleQueue) *Binn {
 type Subscription struct {
 	id       string
 	nextTime time.Time
+
+	bottleIDs map[string]struct{}
 }
 
 func (bn *Binn) Subscribe(id string) {
-	bn.subs = append(bn.subs, &Subscription{id: id, nextTime: now().Add(bn.itv)})
+	bn.subs = append(bn.subs, &Subscription{id: id, nextTime: now().Add(bn.itv), bottleIDs: map[string]struct{}{}})
 }
 
 func (bn *Binn) GetBottle(subID string) (*Bottle, error) {
@@ -48,16 +50,21 @@ func (bn *Binn) GetBottle(subID string) (*Bottle, error) {
 				return nil, nil
 			}
 			sub.nextTime = time.Now().Add(bn.itv)
+			sub.bottleIDs[b.ID] = struct{}{}
 			return b, nil
 		}
 	}
 	return nil, errors.New("not found subscription")
 }
 
-func (bn *Binn) SetBottle(b *Bottle, subID string) error {
+func (bn *Binn) Publish(subID string, b *Bottle) error {
 	for _, sub := range bn.subs {
 		if sub.id == subID {
-			return bn.bq.Push(b)
+			if _, ok := sub.bottleIDs[b.ID]; ok {
+				delete(sub.bottleIDs, b.ID)
+				return bn.bq.Push(b)
+			}
+			return errors.New("not found subscribed a bottle")
 		}
 	}
 	return errors.New("not found subscription")
