@@ -1,7 +1,6 @@
 package binn
 
 import (
-	"errors"
 	"fmt"
 	"strconv"
 	"time"
@@ -51,15 +50,15 @@ func (bq *bottleQueue) Push(b *Bottle) error {
 		}
 	}
 	if sb == nil {
-		return errors.New(fmt.Sprintf("not found bottle id is %s", b.ID))
+		return NewBinnError(CodeNotFoundBottle, fmt.Sprintf("not found bottle id is %s", b.ID), nil)
 	}
 
 	if sb.state == stateAvailable {
-		return errors.New(fmt.Sprintf("bottle id is %s has not been popped", b.ID))
+		return NewBinnError(CodeUnavailableBottle, fmt.Sprintf("bottle id is %s has not been popped", b.ID), nil)
 	}
 	if sb.bottle.IsExpired() {
 		sb.reset()
-		return errors.New(fmt.Sprintf("bottle id is %s is expired", b.ID))
+		return NewBinnError(CodeExpiredBottle, fmt.Sprintf("bottle id is %s is expired", b.ID), nil)
 	}
 	sb.bottle.Msg = b.Msg
 	sb.reset()

@@ -1,7 +1,6 @@
 package binn
 
 import (
-	"errors"
 	"time"
 )
 
@@ -52,7 +51,7 @@ func (bn *Binn) GetBottle(subID string) (*Bottle, error) {
 	if sub, ok := bn.subs[subID]; ok {
 		if sub.IsExpired() {
 			delete(bn.subs, subID)
-			return nil, errors.New("subscription is expired")
+			return nil, NewBinnError(CodeExpiredSubscription, "subscriptions is expired", nil)
 		}
 		if sub.nextTime.After(now()) {
 			return nil, nil
@@ -68,21 +67,21 @@ func (bn *Binn) GetBottle(subID string) (*Bottle, error) {
 		sub.bottleIDs[b.ID] = struct{}{}
 		return b, nil
 	}
-	return nil, errors.New("not found subscription")
+	return nil, NewBinnError(CodeNotFoundSubscription, "not found subscription", nil)
 }
 
 func (bn *Binn) Publish(subID string, b *Bottle) error {
 	for _, sub := range bn.subs {
 		if sub.id == subID {
 			if sub.IsExpired() {
-				return errors.New("subscription is expired")
+				return NewBinnError(CodeExpiredSubscription, "subscriptions is expired", nil)
 			}
 			if _, ok := sub.bottleIDs[b.ID]; ok {
 				delete(sub.bottleIDs, b.ID)
 				return bn.bq.Push(b)
 			}
-			return errors.New("not found subscribed a bottle")
+			return NewBinnError(CodeNotFoundSubscribedBottle, "not found subscribed a bottle", nil)
 		}
 	}
-	return errors.New("not found subscription")
+	return NewBinnError(CodeNotFoundSubscription, "not found subscription", nil)
 }

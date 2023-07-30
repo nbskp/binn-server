@@ -59,7 +59,7 @@ func getBottlesHandlerFunc(bn *binn.Binn, logger *slog.Logger) http.HandlerFunc 
 		b, err := bn.GetBottle(subID)
 		if err != nil {
 			logger.ErrorCtx(r.Context(), err.Error())
-			w.WriteHeader(http.StatusInternalServerError)
+			handleError(w, err, http.StatusInternalServerError)
 			return
 		}
 		if b == nil {
@@ -88,7 +88,7 @@ func postBottlesHandlerFunc(bn *binn.Binn, logger *slog.Logger) http.HandlerFunc
 		subID := ctxutil.SubscriptionID(r.Context())
 		if err := bn.Publish(subID, b); err != nil {
 			logger.ErrorCtx(r.Context(), err.Error())
-			w.WriteHeader(http.StatusBadRequest)
+			handleError(w, err, http.StatusInternalServerError)
 			return
 		}
 	}
