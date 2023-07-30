@@ -63,14 +63,13 @@ func getBottlesHandlerFunc(bn *binn.Binn, logger *slog.Logger) http.HandlerFunc 
 			return
 		}
 		if b == nil {
-			logger.ErrorCtx(r.Context(), err.Error())
 			w.WriteHeader(http.StatusNoContent)
 			return
 		}
 		resp := toBottlesResponse(b)
 		if err := json.NewEncoder(w).Encode(&resp); err != nil {
 			logger.ErrorCtx(r.Context(), err.Error())
-			w.WriteHeader(http.StatusNoContent)
+			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 	}
