@@ -24,5 +24,6 @@ func newHandler(bn *binn.Binn, auth auth.Provider, logger *slog.Logger) http.Han
 	r.Handle("/bottles", NewBottlesMux(bn, auth, logger))
 	r.Handle("/bottles:subscribe", subscribeBottlesHandler(bn, auth, logger))
 
-	return middleware.AccessLogMiddleware(middleware.IDMiddleware(r, logger), logger)
+	return middleware.AccessLogMiddleware(
+		middleware.IDMiddleware(middleware.CORSMiddleware(r), logger), logger)
 }
