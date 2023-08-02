@@ -21,20 +21,20 @@ func (sb *statefulBottle) reset() {
 	sb.state = stateAvailable
 }
 
-type bottleQueue struct {
+type bottlesHandler struct {
 	sbs        []statefulBottle
 	size       int
 	cnt        int
 	expiration time.Duration
 }
 
-func NewBottleQueue(size int, expiration time.Duration) *bottleQueue {
+func NewBottlesHandler(size int, expiration time.Duration) *bottlesHandler {
 	sbs := make([]statefulBottle, size)
 	for i := 0; i < size; i++ {
 		sbs[i].bottle = &Bottle{ID: strconv.Itoa(i), Msg: "", ExpiredAt: 0}
 		sbs[i].state = stateAvailable
 	}
-	return &bottleQueue{
+	return &bottlesHandler{
 		sbs:        sbs,
 		size:       size,
 		cnt:        0,
@@ -42,7 +42,7 @@ func NewBottleQueue(size int, expiration time.Duration) *bottleQueue {
 	}
 }
 
-func (bq *bottleQueue) Push(b *Bottle) error {
+func (bq *bottlesHandler) Set(b *Bottle) error {
 	var sb *statefulBottle
 	for i := 0; i < bq.size; i++ {
 		if bq.sbs[i].bottle.ID == b.ID {
@@ -65,7 +65,7 @@ func (bq *bottleQueue) Push(b *Bottle) error {
 	return nil
 }
 
-func (bq *bottleQueue) Pop() (*Bottle, error) {
+func (bq *bottlesHandler) Next() (*Bottle, error) {
 	var sb *statefulBottle
 	for i := 0; i < bq.size; i++ {
 		if sb_ := &bq.sbs[bq.cnt%bq.size]; sb_.state == stateAvailable || (sb_.state == stateUnavailable && sb_.bottle.IsExpired()) {

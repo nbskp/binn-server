@@ -10,12 +10,12 @@ import (
 
 type stubQueue struct{}
 
-func (s *stubQueue) Pop() (*Bottle, error) {
-	return &Bottle{ID: "1", Msg: "sample"}, nil
+func (s *stubQueue) Set(b *Bottle) error {
+	return nil
 }
 
-func (s *stubQueue) Push(b *Bottle) error {
-	return nil
+func (s *stubQueue) Next() (*Bottle, error) {
+	return &Bottle{ID: "1", Msg: "sample"}, nil
 }
 
 func Test_Binn_GetBottle(t *testing.T) {
@@ -29,7 +29,7 @@ func Test_Binn_GetBottle(t *testing.T) {
 	itv := time.Duration(1)
 	subExp := time.Duration(10)
 	bn := &Binn{
-		bq: q,
+		bh: q,
 		subs: map[string]*Subscription{
 			"example_id": {
 				id:        "example_id",
@@ -66,7 +66,7 @@ func Test_binn_Publish(t *testing.T) {
 	itv := time.Duration(1)
 	subExp := time.Duration(10)
 	bn := &Binn{
-		bq: q,
+		bh: q,
 		subs: map[string]*Subscription{
 			"example_id": {
 				id:        "example_id",

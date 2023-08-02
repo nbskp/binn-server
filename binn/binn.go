@@ -4,22 +4,22 @@ import (
 	"time"
 )
 
-type BottleQueue interface {
-	Push(*Bottle) error
-	Pop() (*Bottle, error)
+type BottlesHandler interface {
+	Set(*Bottle) error
+	Next() (*Bottle, error)
 }
 
 type Binn struct {
-	bq   BottleQueue
+	bh   BottlesHandler
 	subs map[string]*Subscription
 
 	itv    time.Duration
 	subExp time.Duration
 }
 
-func NewBinn(itv time.Duration, bq BottleQueue, subExp time.Duration) *Binn {
+func NewBinn(itv time.Duration, bq BottlesHandler, subExp time.Duration) *Binn {
 	return &Binn{
-		bq:     bq,
+		bh:     bq,
 		subs:   map[string]*Subscription{},
 		itv:    itv,
 		subExp: subExp,
@@ -56,7 +56,7 @@ func (bn *Binn) GetBottle(subID string) (*Bottle, error) {
 		if sub.nextTime.After(now()) {
 			return nil, nil
 		}
-		b, err := bn.bq.Pop()
+		b, err := bn.bh.Next()
 		if err != nil {
 			return nil, err
 		}
@@ -78,7 +78,7 @@ func (bn *Binn) Publish(subID string, b *Bottle) error {
 			}
 			if _, ok := sub.bottleIDs[b.ID]; ok {
 				delete(sub.bottleIDs, b.ID)
-				return bn.bq.Push(b)
+				return bn.bh.Set(b)
 			}
 			return NewBinnError(CodeNotFoundSubscribedBottle, "not found subscribed a bottle", nil)
 		}

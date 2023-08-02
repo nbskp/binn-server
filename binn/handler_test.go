@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func Test_BottleQueue_Push(t *testing.T) {
+func Test_BottleQueue_Set(t *testing.T) {
 	nowTime := time.Now()
 	now = func() time.Time {
 		return nowTime
@@ -124,18 +124,18 @@ func Test_BottleQueue_Push(t *testing.T) {
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			q := &bottleQueue{
+			q := &bottlesHandler{
 				sbs:  c.args.sbs,
 				size: c.args.size,
 			}
-			err := q.Push(&c.args.b)
+			err := q.Set(&c.args.b)
 			c.expected.wantErr(t, err)
 			assert.Equal(t, c.expected.sbs, q.sbs)
 		})
 	}
 }
 
-func Test_BottleQueue_Pop(t *testing.T) {
+func Test_BottleQueue_Next(t *testing.T) {
 	nowTime := time.Now()
 	now = func() time.Time {
 		return nowTime
@@ -305,14 +305,14 @@ func Test_BottleQueue_Pop(t *testing.T) {
 	for _, c := range cases {
 		fmt.Println()
 		t.Run(c.name, func(t *testing.T) {
-			q := &bottleQueue{
+			q := &bottlesHandler{
 				sbs:        c.args.sbs,
 				size:       c.args.size,
 				expiration: c.args.expiration,
 			}
 
 			for i := 0; i < c.args.size; i++ {
-				b, err := q.Pop()
+				b, err := q.Next()
 				assert.Equal(t, c.expected.poppedBottles[i], b)
 				c.expected.wantErrs[i](t, err)
 			}
