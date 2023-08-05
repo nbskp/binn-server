@@ -5,3 +5,12 @@ services:
     ports:
       - 8080:8080
     command: "/binn"
+  mysql:
+    image: mysql:8.0.34
+    environment:
+      - MYSQL_DATABASE: binn
+      - MYSQL_ROOT_PASSWORD: root
+      - MYSQL_USER: binn
+      - MYSQL_PASSWORD: binn
+    ports:
+      - 3307:3306

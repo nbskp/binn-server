@@ -1,11 +1,15 @@
 package server
 
-import "github.com/nbskp/binn-server/binn"
+import (
+	"time"
+
+	"github.com/nbskp/binn-server/binn"
+)
 
 type bottlesResponse struct {
-	ID        string `json:"id"`
-	Msg       string `json:"message"`
-	ExpiredAt int64  `json:"expired_at"`
+	ID        string    `json:"id"`
+	Msg       string    `json:"message"`
+	ExpiredAt time.Time `json:"expired_at"`
 }
 
 func toBottlesResponse(b *binn.Bottle) *bottlesResponse {

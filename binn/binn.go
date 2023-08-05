@@ -1,12 +1,13 @@
 package binn
 
 import (
+	"context"
 	"time"
 )
 
 type BottlesHandler interface {
-	Set(*Bottle) error
-	Next() (*Bottle, error)
+	Set(context.Context, *Bottle) error
+	Next(context.Context) (*Bottle, error)
 }
 
 type Binn struct {
@@ -38,7 +39,7 @@ func (s *Subscription) IsExpired() bool {
 	return now().After(s.expiredAt)
 }
 
-func (bn *Binn) Subscribe(id string) {
+func (bn *Binn) Subscribe(ctx context.Context, id string) {
 	bn.subs[id] = &Subscription{
 		id:        id,
 		expiredAt: now().Add(bn.subExp),
@@ -47,7 +48,7 @@ func (bn *Binn) Subscribe(id string) {
 	}
 }
 
-func (bn *Binn) GetBottle(subID string) (*Bottle, error) {
+func (bn *Binn) GetBottle(ctx context.Context, subID string) (*Bottle, error) {
 	if sub, ok := bn.subs[subID]; ok {
 		if sub.IsExpired() {
 			delete(bn.subs, subID)
@@ -56,7 +57,7 @@ func (bn *Binn) GetBottle(subID string) (*Bottle, error) {
 		if sub.nextTime.After(now()) {
 			return nil, nil
 		}
-		b, err := bn.bh.Next()
+		b, err := bn.bh.Next(ctx)
 		if err != nil {
 			return nil, err
 		}
@@ -70,7 +71,7 @@ func (bn *Binn) GetBottle(subID string) (*Bottle, error) {
 	return nil, NewBinnError(CodeNotFoundSubscription, "not found subscription", nil)
 }
 
-func (bn *Binn) Publish(subID string, b *Bottle) error {
+func (bn *Binn) Publish(ctx context.Context, subID string, b *Bottle) error {
 	for _, sub := range bn.subs {
 		if sub.id == subID {
 			if sub.IsExpired() {
@@ -78,7 +79,7 @@ func (bn *Binn) Publish(subID string, b *Bottle) error {
 			}
 			if _, ok := sub.bottleIDs[b.ID]; ok {
 				delete(sub.bottleIDs, b.ID)
-				return bn.bh.Set(b)
+				return bn.bh.Set(ctx, b)
 			}
 			return NewBinnError(CodeNotFoundSubscribedBottle, "not found subscribed a bottle", nil)
 		}

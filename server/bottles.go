@@ -29,7 +29,7 @@ func subscribeBottlesHandler(bn *binn.Binn, auth auth.Provider, logger *slog.Log
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
-		bn.Subscribe(token)
+		bn.Subscribe(r.Context(), token)
 		if err := json.NewEncoder(w).Encode(newSubscribeBottlesResponse(token)); err != nil {
 			logger.ErrorCtx(r.Context(), err.Error())
 			w.WriteHeader(http.StatusInternalServerError)
@@ -56,7 +56,7 @@ func bottlesHandlerFunc(bn *binn.Binn, logger *slog.Logger) http.HandlerFunc {
 func getBottlesHandlerFunc(bn *binn.Binn, logger *slog.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		subID := ctxutil.SubscriptionID(r.Context())
-		b, err := bn.GetBottle(subID)
+		b, err := bn.GetBottle(r.Context(), subID)
 		if err != nil {
 			logger.ErrorCtx(r.Context(), err.Error())
 			handleError(w, err, http.StatusInternalServerError)
@@ -86,7 +86,7 @@ func postBottlesHandlerFunc(bn *binn.Binn, logger *slog.Logger) http.HandlerFunc
 		}
 		b := reqBody.toBottles()
 		subID := ctxutil.SubscriptionID(r.Context())
-		if err := bn.Publish(subID, b); err != nil {
+		if err := bn.Publish(r.Context(), subID, b); err != nil {
 			logger.ErrorCtx(r.Context(), err.Error())
 			handleError(w, err, http.StatusInternalServerError)
 			return

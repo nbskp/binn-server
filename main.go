@@ -5,6 +5,8 @@ import (
 	"os"
 	"time"
 
+	_ "github.com/go-sql-driver/mysql"
+	"github.com/jmoiron/sqlx"
 	"github.com/nbskp/binn-server/auth"
 	"github.com/nbskp/binn-server/binn"
 	"github.com/nbskp/binn-server/config"
@@ -17,8 +19,17 @@ var programLevel = new(slog.LevelVar)
 
 func main() {
 	c := config.NewFromEnv()
-	q := binn.NewBottlesHandler(100, 15*time.Minute)
-	bn := binn.NewBinn(c.SendInterval, q, c.SubscriptionExpiration)
+
+	db, err := sqlx.Connect("mysql", "binn:binn@tcp(mysql:3306)/binn?parseTime=true")
+	if err != nil {
+		log.Fatal(err)
+	}
+	bh, err := binn.NewBottlesMySQLHandler(db, 15*time.Minute, 10)
+	if err != nil {
+		log.Fatal(err)
+	}
+	//q := binn.NewBottlesHandler(100, 15*time.Minute)
+	bn := binn.NewBinn(c.SendInterval, bh, c.SubscriptionExpiration)
 	l := slog.New(logutil.NewCtxHandler(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: programLevel})))
 	auth := auth.NewTokenProvider(10)
 	srv := server.New(bn, auth, ":8080", l)

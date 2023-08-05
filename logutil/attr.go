@@ -29,7 +29,7 @@ func AttrBottle(b *binn.Bottle) slog.Attr {
 		slog.String(attrBottleIDKey, b.ID),
 		slog.String(attrBottleMsgKey, b.Msg),
 		slog.String(attrBottleTokenKey, b.Msg),
-		slog.Int64(attrBottleExpiredAtKey, b.ExpiredAt),
+		slog.Time(attrBottleExpiredAtKey, b.ExpiredAt),
 	)
 }
 
