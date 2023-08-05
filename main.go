@@ -28,8 +28,8 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	//q := binn.NewBottlesHandler(100, 15*time.Minute)
-	bn := binn.NewBinn(c.SendInterval, bh, c.SubscriptionExpiration)
+	sh := binn.NewSubscriptionsHandler()
+	bn := binn.NewBinn(c.SendInterval, bh, sh, c.SubscriptionExpiration)
 	l := slog.New(logutil.NewCtxHandler(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: programLevel})))
 	auth := auth.NewTokenProvider(10)
 	srv := server.New(bn, auth, ":8080", l)
