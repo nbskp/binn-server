@@ -28,7 +28,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	sh := binn.NewSubscriptionsHandler()
+	sh := binn.NewSubscriptionsMySQLHandler(db)
 	bn := binn.NewBinn(c.SendInterval, bh, sh, c.SubscriptionExpiration)
 	l := slog.New(logutil.NewCtxHandler(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: programLevel})))
 	auth := auth.NewTokenProvider(10)

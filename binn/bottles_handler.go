@@ -150,7 +150,7 @@ func (bh *bottlesMySQLHandler) Set(ctx context.Context, b *Bottle) error {
 }
 
 func (bh *bottlesMySQLHandler) Next(ctx context.Context) (*Bottle, error) {
-	row := bh.db.QueryRowxContext(ctx, "SELECT * FROM bottles WHERE available=true OR (available=false AND expired_at<=CURRENT_TIMESTAMP) LIMIT 1")
+	row := bh.db.QueryRowxContext(ctx, "SELECT * FROM bottles WHERE available=true OR (available=false AND expired_at<=?) LIMIT 1", now().Format(time.RFC3339))
 	if err := row.Err(); err != nil {
 		return nil, fmt.Errorf("failed to get a next bottle: %w", err)
 	}
@@ -161,8 +161,8 @@ func (bh *bottlesMySQLHandler) Next(ctx context.Context) (*Bottle, error) {
 		}
 		return nil, fmt.Errorf("failed to scan a next bottle: %w", err)
 	}
-	expiredAt := time.Now().Add(bh.expiration).UTC()
-	_, err := bh.db.NamedExecContext(context.TODO(), "UPDATE bottles SET expired_at=:expired_at, available=false WHERE id=:id", bottlesRecord{ID: rc.ID, ExpiredAt: &expiredAt})
+	expiredAt := time.Now().Add(bh.expiration)
+	_, err := bh.db.ExecContext(context.TODO(), "UPDATE bottles SET expired_at=?, available=false WHERE id=?", expiredAt.Format(time.RFC3339), rc.ID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to update expired_at and available: %w", err)
 	}
