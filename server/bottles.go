@@ -11,19 +11,19 @@ import (
 	"golang.org/x/exp/slog"
 )
 
-func NewBottlesMux(bn *binn.Binn, auth auth.Provider, logger *slog.Logger) *http.ServeMux {
+func NewBottlesMux(bn *binn.Binn, provider auth.Provider, logger *slog.Logger) *http.ServeMux {
 	r := http.NewServeMux()
-	r.Handle("/", middleware.AuthMiddleware(http.HandlerFunc(bottlesHandlerFunc(bn, logger)), auth, logger))
+	r.Handle("/", middleware.AuthMiddleware(http.HandlerFunc(bottlesHandlerFunc(bn, logger)), provider, logger))
 	return r
 }
 
-func subscribeBottlesHandler(bn *binn.Binn, auth auth.Provider, logger *slog.Logger) http.Handler {
+func subscribeBottlesHandler(bn *binn.Binn, provider auth.Provider, logger *slog.Logger) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
 			w.WriteHeader(http.StatusMethodNotAllowed)
 			return
 		}
-		token, err := auth.Issue()
+		token, err := provider.Issue(r.Context())
 		if err != nil {
 			logger.ErrorCtx(r.Context(), err.Error())
 			w.WriteHeader(http.StatusInternalServerError)

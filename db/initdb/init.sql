@@ -19,3 +19,7 @@ CREATE TABLE subscribed_bottles (
        FOREIGN KEY fk_subscription_id (subscription_id)
        REFERENCES subscriptions(id)
 );
+
+CREATE TABLE tokens (
+       id char(255) NOT NULL PRIMARY KEY
+)

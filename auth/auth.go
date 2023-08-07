@@ -1,45 +1,14 @@
 package auth
 
 import (
+	"context"
 	"crypto/rand"
 	"fmt"
 )
 
 type Provider interface {
-	Issue() (string, error)
-	Authorize(string) (string, bool, error)
-}
-
-type tokenProvider struct {
-	tokens map[string]struct{}
-	tLen   int
-}
-
-func NewTokenProvider(tLen int) *tokenProvider {
-	return &tokenProvider{
-		tokens: make(map[string]struct{}),
-		tLen:   tLen,
-	}
-}
-
-func (p *tokenProvider) Issue() (string, error) {
-	var token string
-	for _, ok := p.tokens[token]; ok || token == ""; {
-		var err error
-		token, err = generateRandomStr(uint32(p.tLen))
-		if err != nil {
-			return "", err
-		}
-	}
-	p.tokens[token] = struct{}{}
-	return token, nil
-}
-
-func (p *tokenProvider) Authorize(token string) (string, bool, error) {
-	if _, ok := p.tokens[token]; ok {
-		return token, true, nil
-	}
-	return "", false, nil
+	Issue(context.Context) (string, error)
+	Authorize(context.Context, string) (string, bool, error)
 }
 
 func generateRandomStr(digit uint32) (string, error) {

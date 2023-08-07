@@ -9,7 +9,7 @@ import (
 	"golang.org/x/exp/slog"
 )
 
-func AuthMiddleware(next http.Handler, auth auth.Provider, logger *slog.Logger) http.Handler {
+func AuthMiddleware(next http.Handler, provider auth.Provider, logger *slog.Logger) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		es := strings.Split(r.Header.Get("Authorization"), " ")
 		if len(es) != 2 {
@@ -21,7 +21,7 @@ func AuthMiddleware(next http.Handler, auth auth.Provider, logger *slog.Logger) 
 			w.WriteHeader(http.StatusUnauthorized)
 			return
 		}
-		subID, ok, err := auth.Authorize(token)
+		subID, ok, err := provider.Authorize(r.Context(), token)
 		if err != nil || !ok {
 			w.WriteHeader(http.StatusUnauthorized)
 			return

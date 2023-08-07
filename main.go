@@ -31,8 +31,8 @@ func main() {
 	sh := binn.NewSubscriptionsMySQLHandler(db)
 	bn := binn.NewBinn(c.SendInterval, bh, sh, c.SubscriptionExpiration)
 	l := slog.New(logutil.NewCtxHandler(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: programLevel})))
-	auth := auth.NewTokenProvider(10)
-	srv := server.New(bn, auth, ":8080", l)
+	provider := auth.NewTokenMySQLProvider(db, 10)
+	srv := server.New(bn, provider, ":8080", l)
 	if err := srv.ListenAndServe(); err != nil {
 		log.Fatal(err)
 	}
