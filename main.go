@@ -13,6 +13,7 @@ import (
 	"github.com/nbskp/binn-server/server"
 	"golang.org/x/exp/slog"
 
+	"github.com/lestrrat-go/jwx/v2/jwk"
 	"github.com/redis/go-redis/v9"
 )
 
@@ -47,14 +48,11 @@ func main() {
 
 	bn := binn.NewBinn(c.SendInterval, bh, sh)
 
-	provider := auth.NewTokenRedisProvider(
-		redis.NewClient(&redis.Options{
-			Network: "tcp",
-			Addr:    c.RedisAddr,
-			DB:      2,
-		}),
-		10,
-	)
+	key, err := jwk.FromRaw([]byte("test-key"))
+	if err != nil {
+		log.Fatal(err)
+	}
+	provider := auth.NewJWTProvider(key, c.SubscriptionExpiration)
 	srv := server.New(bn, provider, ":8080", l)
 	if err := srv.ListenAndServe(); err != nil {
 		log.Fatal(err)
