@@ -22,21 +22,21 @@ func Test_Bottle_IsExpired(t *testing.T) {
 		{
 			name: "now > expiration, return true",
 			args: Bottle{
-				ExpiredAt: time.Date(2023, time.June, 10, 11, 59, 0, 0, time.UTC).Unix(),
+				ExpiredAt: time.Date(2023, time.June, 10, 11, 59, 0, 0, time.UTC),
 			},
 			expected: true,
 		},
 		{
 			name: "now = expiration, return false",
 			args: Bottle{
-				ExpiredAt: time.Date(2023, time.June, 10, 12, 0, 0, 0, time.UTC).Unix(),
+				ExpiredAt: time.Date(2023, time.June, 10, 12, 0, 0, 0, time.UTC),
 			},
 			expected: false,
 		},
 		{
 			name: "now < expiration, return false",
 			args: Bottle{
-				ExpiredAt: time.Date(2023, time.June, 10, 12, 1, 0, 0, time.UTC).Unix(),
+				ExpiredAt: time.Date(2023, time.June, 10, 12, 1, 0, 0, time.UTC),
 			},
 			expected: false,
 		},

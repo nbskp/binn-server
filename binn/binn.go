@@ -17,26 +17,22 @@ type SubscriptionsHandler interface {
 }
 
 type Binn struct {
-	bh BottlesHandler
-	sh SubscriptionsHandler
-
-	itv    time.Duration
-	subExp time.Duration
+	bh  BottlesHandler
+	sh  SubscriptionsHandler
+	itv time.Duration
 }
 
-func NewBinn(itv time.Duration, bh BottlesHandler, sh SubscriptionsHandler, subExp time.Duration) *Binn {
+func NewBinn(itv time.Duration, bh BottlesHandler, sh SubscriptionsHandler) *Binn {
 	return &Binn{
-		bh:     bh,
-		sh:     sh,
-		itv:    itv,
-		subExp: subExp,
+		bh:  bh,
+		sh:  sh,
+		itv: itv,
 	}
 }
 
 func (bn *Binn) Subscribe(ctx context.Context, subID string) error {
 	return bn.sh.Add(ctx, &Subscription{
 		id:        subID,
-		expiredAt: now().Add(bn.subExp),
 		nextTime:  now().Add(bn.itv),
 		bottleIDs: []string{}},
 	)
@@ -47,8 +43,8 @@ func (bn *Binn) GetBottle(ctx context.Context, subID string) (*Bottle, error) {
 	if err != nil {
 		return nil, err
 	}
-	if sub.nextTime.After(now()) {
-		return nil, nil
+	if sub == nil {
+		return nil, NewBinnError(CodeNotFoundSubscription, "not found the subscription", nil)
 	}
 	b, err := bn.bh.Next(ctx)
 	if err != nil {

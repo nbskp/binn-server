@@ -4,9 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/jmoiron/sqlx"
+	"github.com/redis/go-redis/v9"
 )
 
 type subscriptionsHandler struct {
@@ -133,4 +135,65 @@ func (sh *subscriptionsMySQLHandler) Add(ctx context.Context, sub *Subscription)
 
 func NewSubscriptionsMySQLHandler(db *sqlx.DB) *subscriptionsMySQLHandler {
 	return &subscriptionsMySQLHandler{db: db}
+}
+
+type subscriptionsRedisHandler struct {
+	cli *redis.Client
+	exp time.Duration
+}
+
+func subscriptionToHashFields(s *Subscription) []interface{} {
+	fs := make([]interface{}, 4)
+	fs = append(fs, "next_time", s.nextTime)
+	fs = append(fs, "bottle_ids", strings.Join(s.bottleIDs, ","))
+	return fs
+}
+
+func mapToSubscription(m map[string]string) (*Subscription, error) {
+	nt, err := time.Parse(time.RFC3339, m["next_time"])
+	if err != nil {
+		return nil, err
+	}
+	return &Subscription{
+		nextTime:  nt,
+		bottleIDs: strings.Split(m["bottle_ids"], ","),
+	}, nil
+}
+
+func (sh *subscriptionsRedisHandler) Get(ctx context.Context, id string) (*Subscription, error) {
+	vs, err := sh.cli.HGetAll(ctx, id).Result()
+	if err != nil {
+		return nil, err
+	}
+	// https://github.com/redis/go-redis/issues/1668
+	if len(vs) == 0 {
+		return nil, nil
+	}
+	return mapToSubscription(vs)
+}
+
+func (sh *subscriptionsRedisHandler) Update(ctx context.Context, sub *Subscription) error {
+	fs := subscriptionToHashFields(sub)
+	_, err := sh.cli.HSet(ctx, sub.id, fs...).Result()
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (sh *subscriptionsRedisHandler) Add(ctx context.Context, sub *Subscription) error {
+	fs := subscriptionToHashFields(sub)
+	_, err := sh.cli.HSet(ctx, sub.id, fs...).Result()
+	if err != nil {
+		return err
+	}
+	_, err = sh.cli.ExpireAt(ctx, sub.id, now().Add(sh.exp)).Result()
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func NewSubscriptionsRedisHandler(cli *redis.Client, exp time.Duration) *subscriptionsRedisHandler {
+	return &subscriptionsRedisHandler{cli: cli, exp: exp}
 }

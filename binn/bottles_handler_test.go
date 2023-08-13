@@ -1,6 +1,7 @@
 package binn
 
 import (
+	"context"
 	"fmt"
 	"testing"
 	"time"
@@ -16,8 +17,8 @@ func Test_BottleQueue_Set(t *testing.T) {
 	defer func() {
 		now = time.Now
 	}()
-	notExpiredUnixSec := nowTime.Add(24 * time.Hour).Unix()
-	expiredUnixSec := nowTime.Add(-24 * time.Hour).Unix()
+	notExpiredUnixSec := nowTime.Add(24 * time.Hour)
+	expiredUnixSec := nowTime.Add(-24 * time.Hour)
 
 	type args struct {
 		b    Bottle
@@ -48,7 +49,7 @@ func Test_BottleQueue_Set(t *testing.T) {
 			expected: expected{
 				sbs: []statefulBottle{
 					{
-						bottle: &Bottle{ID: "0", Msg: "new msg", ExpiredAt: 0},
+						bottle: &Bottle{ID: "0", Msg: "new msg", ExpiredAt: time.Time{}},
 						state:  stateAvailable,
 					},
 				},
@@ -114,7 +115,7 @@ func Test_BottleQueue_Set(t *testing.T) {
 			expected: expected{
 				sbs: []statefulBottle{
 					{
-						bottle: &Bottle{ID: "0", Msg: "", ExpiredAt: 0},
+						bottle: &Bottle{ID: "0", Msg: "", ExpiredAt: time.Time{}},
 						state:  stateAvailable,
 					},
 				},
@@ -128,7 +129,7 @@ func Test_BottleQueue_Set(t *testing.T) {
 				sbs:  c.args.sbs,
 				size: c.args.size,
 			}
-			err := q.Set(&c.args.b)
+			err := q.Set(context.Background(), &c.args.b)
 			c.expected.wantErr(t, err)
 			assert.Equal(t, c.expected.sbs, q.sbs)
 		})
@@ -143,7 +144,7 @@ func Test_BottleQueue_Next(t *testing.T) {
 	defer func() {
 		now = time.Now
 	}()
-	expiredUnixSec := nowTime.Add(-24 * time.Hour).Unix()
+	expiredUnixSec := nowTime.Add(-24 * time.Hour)
 
 	type args struct {
 		sbs        []statefulBottle
@@ -165,15 +166,15 @@ func Test_BottleQueue_Next(t *testing.T) {
 			args: args{
 				sbs: []statefulBottle{
 					{
-						bottle: &Bottle{ID: "1", Msg: "msg1", ExpiredAt: 0},
+						bottle: &Bottle{ID: "1", Msg: "msg1", ExpiredAt: time.Time{}},
 						state:  stateAvailable,
 					},
 					{
-						bottle: &Bottle{ID: "2", Msg: "msg2", ExpiredAt: 0},
+						bottle: &Bottle{ID: "2", Msg: "msg2", ExpiredAt: time.Time{}},
 						state:  stateAvailable,
 					},
 					{
-						bottle: &Bottle{ID: "3", Msg: "msg3", ExpiredAt: 0},
+						bottle: &Bottle{ID: "3", Msg: "msg3", ExpiredAt: time.Time{}},
 						state:  stateAvailable,
 					},
 				},
@@ -182,9 +183,9 @@ func Test_BottleQueue_Next(t *testing.T) {
 			},
 			expected: expected{
 				poppedBottles: []*Bottle{
-					{ID: "1", Msg: "msg1", ExpiredAt: nowTime.Add(1 * time.Hour).Unix()},
-					{ID: "2", Msg: "msg2", ExpiredAt: nowTime.Add(1 * time.Hour).Unix()},
-					{ID: "3", Msg: "msg3", ExpiredAt: nowTime.Add(1 * time.Hour).Unix()},
+					{ID: "1", Msg: "msg1", ExpiredAt: nowTime.Add(1 * time.Hour)},
+					{ID: "2", Msg: "msg2", ExpiredAt: nowTime.Add(1 * time.Hour)},
+					{ID: "3", Msg: "msg3", ExpiredAt: nowTime.Add(1 * time.Hour)},
 				},
 				wantErrs: []assert.ErrorAssertionFunc{
 					assert.NoError,
@@ -193,15 +194,15 @@ func Test_BottleQueue_Next(t *testing.T) {
 				},
 				sbs: []statefulBottle{
 					{
-						bottle: &Bottle{ID: "1", Msg: "msg1", ExpiredAt: nowTime.Add(1 * time.Hour).Unix()},
+						bottle: &Bottle{ID: "1", Msg: "msg1", ExpiredAt: nowTime.Add(1 * time.Hour)},
 						state:  stateUnavailable,
 					},
 					{
-						bottle: &Bottle{ID: "2", Msg: "msg2", ExpiredAt: nowTime.Add(1 * time.Hour).Unix()},
+						bottle: &Bottle{ID: "2", Msg: "msg2", ExpiredAt: nowTime.Add(1 * time.Hour)},
 						state:  stateUnavailable,
 					},
 					{
-						bottle: &Bottle{ID: "3", Msg: "msg3", ExpiredAt: nowTime.Add(1 * time.Hour).Unix()},
+						bottle: &Bottle{ID: "3", Msg: "msg3", ExpiredAt: nowTime.Add(1 * time.Hour)},
 						state:  stateUnavailable,
 					},
 				},
@@ -212,15 +213,15 @@ func Test_BottleQueue_Next(t *testing.T) {
 			args: args{
 				sbs: []statefulBottle{
 					{
-						bottle: &Bottle{ID: "1", Msg: "msg1", ExpiredAt: 0},
+						bottle: &Bottle{ID: "1", Msg: "msg1", ExpiredAt: time.Time{}},
 						state:  stateAvailable,
 					},
 					{
-						bottle: &Bottle{ID: "2", Msg: "msg2", ExpiredAt: nowTime.Add(1 * time.Hour).Unix()},
+						bottle: &Bottle{ID: "2", Msg: "msg2", ExpiredAt: nowTime.Add(1 * time.Hour)},
 						state:  stateUnavailable,
 					},
 					{
-						bottle: &Bottle{ID: "3", Msg: "msg3", ExpiredAt: 0},
+						bottle: &Bottle{ID: "3", Msg: "msg3", ExpiredAt: time.Time{}},
 						state:  stateAvailable,
 					},
 				},
@@ -229,8 +230,8 @@ func Test_BottleQueue_Next(t *testing.T) {
 			},
 			expected: expected{
 				poppedBottles: []*Bottle{
-					{ID: "1", Msg: "msg1", ExpiredAt: nowTime.Add(1 * time.Hour).Unix()},
-					{ID: "3", Msg: "msg3", ExpiredAt: nowTime.Add(1 * time.Hour).Unix()},
+					{ID: "1", Msg: "msg1", ExpiredAt: nowTime.Add(1 * time.Hour)},
+					{ID: "3", Msg: "msg3", ExpiredAt: nowTime.Add(1 * time.Hour)},
 					nil,
 				},
 				wantErrs: []assert.ErrorAssertionFunc{
@@ -240,15 +241,15 @@ func Test_BottleQueue_Next(t *testing.T) {
 				},
 				sbs: []statefulBottle{
 					{
-						bottle: &Bottle{ID: "1", Msg: "msg1", ExpiredAt: nowTime.Add(1 * time.Hour).Unix()},
+						bottle: &Bottle{ID: "1", Msg: "msg1", ExpiredAt: nowTime.Add(1 * time.Hour)},
 						state:  stateUnavailable,
 					},
 					{
-						bottle: &Bottle{ID: "2", Msg: "msg2", ExpiredAt: nowTime.Add(1 * time.Hour).Unix()},
+						bottle: &Bottle{ID: "2", Msg: "msg2", ExpiredAt: nowTime.Add(1 * time.Hour)},
 						state:  stateUnavailable,
 					},
 					{
-						bottle: &Bottle{ID: "3", Msg: "msg3", ExpiredAt: nowTime.Add(1 * time.Hour).Unix()},
+						bottle: &Bottle{ID: "3", Msg: "msg3", ExpiredAt: nowTime.Add(1 * time.Hour)},
 						state:  stateUnavailable,
 					},
 				},
@@ -259,7 +260,7 @@ func Test_BottleQueue_Next(t *testing.T) {
 			args: args{
 				sbs: []statefulBottle{
 					{
-						bottle: &Bottle{ID: "1", Msg: "msg1", ExpiredAt: 0},
+						bottle: &Bottle{ID: "1", Msg: "msg1", ExpiredAt: time.Time{}},
 						state:  stateAvailable,
 					},
 					{
@@ -267,7 +268,7 @@ func Test_BottleQueue_Next(t *testing.T) {
 						state:  stateUnavailable,
 					},
 					{
-						bottle: &Bottle{ID: "3", Msg: "msg3", ExpiredAt: 0},
+						bottle: &Bottle{ID: "3", Msg: "msg3", ExpiredAt: time.Time{}},
 						state:  stateAvailable,
 					},
 				},
@@ -276,9 +277,9 @@ func Test_BottleQueue_Next(t *testing.T) {
 			},
 			expected: expected{
 				poppedBottles: []*Bottle{
-					{ID: "1", Msg: "msg1", ExpiredAt: nowTime.Add(1 * time.Hour).Unix()},
-					{ID: "2", Msg: "msg2", ExpiredAt: nowTime.Add(1 * time.Hour).Unix()},
-					{ID: "3", Msg: "msg3", ExpiredAt: nowTime.Add(1 * time.Hour).Unix()},
+					{ID: "1", Msg: "msg1", ExpiredAt: nowTime.Add(1 * time.Hour)},
+					{ID: "2", Msg: "msg2", ExpiredAt: nowTime.Add(1 * time.Hour)},
+					{ID: "3", Msg: "msg3", ExpiredAt: nowTime.Add(1 * time.Hour)},
 				},
 				wantErrs: []assert.ErrorAssertionFunc{
 					assert.NoError,
@@ -287,15 +288,15 @@ func Test_BottleQueue_Next(t *testing.T) {
 				},
 				sbs: []statefulBottle{
 					{
-						bottle: &Bottle{ID: "1", Msg: "msg1", ExpiredAt: nowTime.Add(1 * time.Hour).Unix()},
+						bottle: &Bottle{ID: "1", Msg: "msg1", ExpiredAt: nowTime.Add(1 * time.Hour)},
 						state:  stateUnavailable,
 					},
 					{
-						bottle: &Bottle{ID: "2", Msg: "msg2", ExpiredAt: nowTime.Add(1 * time.Hour).Unix()},
+						bottle: &Bottle{ID: "2", Msg: "msg2", ExpiredAt: nowTime.Add(1 * time.Hour)},
 						state:  stateUnavailable,
 					},
 					{
-						bottle: &Bottle{ID: "3", Msg: "msg3", ExpiredAt: nowTime.Add(1 * time.Hour).Unix()},
+						bottle: &Bottle{ID: "3", Msg: "msg3", ExpiredAt: nowTime.Add(1 * time.Hour)},
 						state:  stateUnavailable,
 					},
 				},
@@ -312,7 +313,7 @@ func Test_BottleQueue_Next(t *testing.T) {
 			}
 
 			for i := 0; i < c.args.size; i++ {
-				b, err := q.Next()
+				b, err := q.Next(context.Background())
 				assert.Equal(t, c.expected.poppedBottles[i], b)
 				c.expected.wantErrs[i](t, err)
 			}
