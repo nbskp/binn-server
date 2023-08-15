@@ -248,8 +248,7 @@ func NewBottlesRedisHandler(ctx context.Context, cli *redis.Client, size int, ex
 	}
 	if len(ks) == 0 {
 		for i := 0; i < size; i++ {
-			id := bottleID(i)
-			_, err := cli.HSet(ctx, id, "msg", "").Result()
+			_, err := cli.HSet(ctx, bottleKey(bottleID(i)), "msg", "").Result()
 			if err != nil {
 				return nil, err
 			}
