@@ -60,7 +60,7 @@ func NewFromEnv(logger *slog.Logger) Config {
 }
 
 func loadPort(logger *slog.Logger) string {
-	s := os.Getenv(envSendInterval)
+	s := os.Getenv(envPort)
 	if s == "" {
 		logger.Warn("cannot load port from env, use default")
 		return defaultPort
