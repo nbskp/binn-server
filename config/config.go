@@ -17,9 +17,11 @@ const (
 
 	envAuthKey = "AUTH_KEY"
 
-	envRedisAddr     = "REDIS_ADDR"
-	envRedisPassword = "REDIS_PASSWORD"
-	envRedisUsername = "REDIS_USERNAME"
+	envRedisAddr           = "REDIS_ADDR"
+	envRedisPassword       = "REDIS_PASSWORD"
+	envRedisUsername       = "REDIS_USERNAME"
+	envRedisBottleDB       = "REDIS_BOTTLE_DB"
+	envRedisSubscriptionDB = "REDIS_SUBSCRIPTION_DB"
 )
 
 var (
@@ -27,6 +29,8 @@ var (
 	defaultSendInterval           = 10 * time.Second
 	defaultBottleExpiration       = 60 * 10 * time.Second
 	defaultSubscriptionExpiration = 60 * 15 * time.Second
+	defaultRedisBottleDB          = 0
+	defaultRedisSubscriptionDB    = 1
 )
 
 type Config struct {
@@ -38,9 +42,11 @@ type Config struct {
 
 	AuthKey string
 
-	RedisAddr     string
-	RedisUsername string
-	RedisPassword string
+	RedisAddr           string
+	RedisUsername       string
+	RedisPassword       string
+	RedisBottleDB       int
+	RedisSubscriptionDB int
 }
 
 func NewFromEnv(logger *slog.Logger) Config {
@@ -53,9 +59,11 @@ func NewFromEnv(logger *slog.Logger) Config {
 
 		AuthKey: loadAuthKey(logger),
 
-		RedisAddr:     loadRedisAddr(logger),
-		RedisUsername: loadRedisUsername(logger),
-		RedisPassword: loadRedisPassword(logger),
+		RedisAddr:           loadRedisAddr(logger),
+		RedisUsername:       loadRedisUsername(logger),
+		RedisPassword:       loadRedisPassword(logger),
+		RedisBottleDB:       loadRedisBottleDB(logger),
+		RedisSubscriptionDB: loadRedisSubscriptionDB(logger),
 	}
 }
 
@@ -119,4 +127,22 @@ func loadRedisUsername(logger *slog.Logger) string {
 
 func loadRedisPassword(logger *slog.Logger) string {
 	return os.Getenv(envRedisPassword)
+}
+
+func loadRedisBottleDB(logger *slog.Logger) int {
+	i, err := strconv.Atoi(os.Getenv(envRedisBottleDB))
+	if err != nil {
+		logger.Warn("cannot load redis bottle db from env, use default")
+		return defaultRedisBottleDB
+	}
+	return i
+}
+
+func loadRedisSubscriptionDB(logger *slog.Logger) int {
+	i, err := strconv.Atoi(os.Getenv(envRedisSubscriptionDB))
+	if err != nil {
+		logger.Warn("cannot load redis subscription db from env, use default")
+		return defaultRedisSubscriptionDB
+	}
+	return i
 }

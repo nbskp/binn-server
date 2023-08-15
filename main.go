@@ -31,7 +31,7 @@ func main() {
 			Addr:     c.RedisAddr,
 			Username: c.RedisUsername,
 			Password: c.RedisPassword,
-			DB:       0,
+			DB:       c.RedisBottleDB,
 		}),
 		10,
 		c.BottleExpiration,
@@ -46,7 +46,7 @@ func main() {
 			Addr:     c.RedisAddr,
 			Username: c.RedisUsername,
 			Password: c.RedisPassword,
-			DB:       1,
+			DB:       c.RedisSubscriptionDB,
 		}),
 		c.SubscriptionExpiration,
 	)
