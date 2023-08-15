@@ -17,7 +17,7 @@ func AuthMiddleware(next http.Handler, provider auth.Provider, logger *slog.Logg
 			return
 		}
 		schema, token := es[0], es[1]
-		if schema != "bearer" {
+		if schema != "Bearer" {
 			w.WriteHeader(http.StatusUnauthorized)
 			return
 		}
