@@ -7,8 +7,8 @@ import (
 )
 
 type Provider interface {
-	Issue(context.Context) (string, error)
-	Authorize(context.Context, string) (string, bool, error)
+	Issue(ctx context.Context, subID string) (token string, err error)
+	Authorize(ctx context.Context, token string) (subID string, ok bool, err error)
 }
 
 func generateRandomStr(digit uint32) (string, error) {

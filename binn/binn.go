@@ -2,6 +2,7 @@ package binn
 
 import (
 	"context"
+	"fmt"
 	"time"
 )
 
@@ -44,7 +45,7 @@ func (bn *Binn) GetBottle(ctx context.Context, subID string) (*Bottle, error) {
 		return nil, err
 	}
 	if sub == nil {
-		return nil, NewBinnError(CodeNotFoundSubscription, "not found the subscription", nil)
+		return nil, NewBinnError(CodeNotFoundSubscription, fmt.Sprintf("not found the subscription ID=%s", subID), nil)
 	}
 	b, err := bn.bh.Next(ctx)
 	if err != nil {

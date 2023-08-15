@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/google/uuid"
 	"github.com/nbskp/binn-server/auth"
 	"github.com/nbskp/binn-server/binn"
 	"github.com/nbskp/binn-server/ctxutil"
@@ -23,13 +24,14 @@ func subscribeBottlesHandler(bn *binn.Binn, provider auth.Provider, logger *slog
 			w.WriteHeader(http.StatusMethodNotAllowed)
 			return
 		}
-		token, err := provider.Issue(r.Context())
+		subID := uuid.New().String()
+		token, err := provider.Issue(r.Context(), subID)
 		if err != nil {
 			logger.ErrorCtx(r.Context(), err.Error())
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
-		bn.Subscribe(r.Context(), token)
+		bn.Subscribe(r.Context(), subID)
 		if err := json.NewEncoder(w).Encode(newSubscribeBottlesResponse(token)); err != nil {
 			logger.ErrorCtx(r.Context(), err.Error())
 			w.WriteHeader(http.StatusInternalServerError)

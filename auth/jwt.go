@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/lestrrat-go/jwx/v2/jwa"
 	"github.com/lestrrat-go/jwx/v2/jwk"
 	"github.com/lestrrat-go/jwx/v2/jws"
@@ -18,10 +17,9 @@ type jwtProvider struct {
 	exp time.Duration
 }
 
-func (p *jwtProvider) Issue(ctx context.Context) (string, error) {
-	id := uuid.New().String()
+func (p *jwtProvider) Issue(ctx context.Context, subID string) (string, error) {
 	tok, err := jwt.NewBuilder().
-		JwtID(id).
+		JwtID(subID).
 		Expiration(time.Now().Add(p.exp).UTC()).
 		Issuer("github.com/nbskp/binn-server").
 		Build()
