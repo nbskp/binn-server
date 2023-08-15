@@ -181,11 +181,11 @@ func bottleID(n int) string {
 }
 
 func bottleKey(id string) string {
-	return id
+	return fmt.Sprintf("bottle:%s", id)
 }
 
 func bottleShadowKey(id string) string {
-	return fmt.Sprintf("%s.shadow", id)
+	return fmt.Sprintf("bottle:%s.shadow", id)
 }
 
 func (h *bottlesRedisHandler) Set(ctx context.Context, b *Bottle) error {
@@ -242,11 +242,11 @@ func (h *bottlesRedisHandler) Next(ctx context.Context) (*Bottle, error) {
 }
 
 func NewBottlesRedisHandler(ctx context.Context, cli *redis.Client, size int, exp time.Duration) (*bottlesRedisHandler, error) {
-	s, err := cli.DBSize(ctx).Result()
+	ks, err := cli.Keys(ctx, "bottle:*").Result()
 	if err != nil {
 		return nil, err
 	}
-	if s == 0 {
+	if len(ks) == 0 {
 		for i := 0; i < size; i++ {
 			id := bottleID(i)
 			_, err := cli.HSet(ctx, id, "msg", "").Result()

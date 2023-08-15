@@ -142,6 +142,10 @@ type subscriptionsRedisHandler struct {
 	exp time.Duration
 }
 
+func subscriptionKey(id string) string {
+	return fmt.Sprintf("subscription:%s", id)
+}
+
 func subscriptionToHashFields(s *Subscription) []interface{} {
 	fs := make([]interface{}, 4)
 	fs = append(fs, "next_time", s.nextTime)
@@ -161,7 +165,7 @@ func mapToSubscription(m map[string]string) (*Subscription, error) {
 }
 
 func (sh *subscriptionsRedisHandler) Get(ctx context.Context, id string) (*Subscription, error) {
-	vs, err := sh.cli.HGetAll(ctx, id).Result()
+	vs, err := sh.cli.HGetAll(ctx, subscriptionKey(id)).Result()
 	if err != nil {
 		return nil, err
 	}
@@ -174,7 +178,7 @@ func (sh *subscriptionsRedisHandler) Get(ctx context.Context, id string) (*Subsc
 
 func (sh *subscriptionsRedisHandler) Update(ctx context.Context, sub *Subscription) error {
 	fs := subscriptionToHashFields(sub)
-	_, err := sh.cli.HSet(ctx, sub.id, fs...).Result()
+	_, err := sh.cli.HSet(ctx, subscriptionKey(sub.id), fs...).Result()
 	if err != nil {
 		return err
 	}
@@ -183,11 +187,11 @@ func (sh *subscriptionsRedisHandler) Update(ctx context.Context, sub *Subscripti
 
 func (sh *subscriptionsRedisHandler) Add(ctx context.Context, sub *Subscription) error {
 	fs := subscriptionToHashFields(sub)
-	_, err := sh.cli.HSet(ctx, sub.id, fs...).Result()
+	_, err := sh.cli.HSet(ctx, subscriptionKey(sub.id), fs...).Result()
 	if err != nil {
 		return err
 	}
-	_, err = sh.cli.ExpireAt(ctx, sub.id, now().Add(sh.exp)).Result()
+	_, err = sh.cli.ExpireAt(ctx, subscriptionKey(sub.id), now().Add(sh.exp)).Result()
 	if err != nil {
 		return err
 	}
