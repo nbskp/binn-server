@@ -47,6 +47,9 @@ func (bn *Binn) GetBottle(ctx context.Context, subID string) (*Bottle, error) {
 	if sub == nil {
 		return nil, NewBinnError(CodeNotFoundSubscription, fmt.Sprintf("not found the subscription ID=%s", subID), nil)
 	}
+	if !now().After(sub.nextTime) {
+		return nil, nil
+	}
 	b, err := bn.bh.Next(ctx)
 	if err != nil {
 		return nil, err
@@ -54,12 +57,15 @@ func (bn *Binn) GetBottle(ctx context.Context, subID string) (*Bottle, error) {
 	if b == nil {
 		return nil, nil
 	}
-	bn.sh.Update(ctx, &Subscription{
+	err = bn.sh.Update(ctx, &Subscription{
 		id:        sub.id,
 		expiredAt: sub.expiredAt,
-		nextTime:  time.Now().Add(bn.itv),
+		nextTime:  now().Add(bn.itv),
 		bottleIDs: append(sub.bottleIDs, b.ID),
 	})
+	if err != nil {
+		return nil, err
+	}
 	return b, nil
 }
 

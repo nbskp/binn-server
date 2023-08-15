@@ -173,7 +173,12 @@ func (sh *subscriptionsRedisHandler) Get(ctx context.Context, id string) (*Subsc
 	if len(vs) == 0 {
 		return nil, nil
 	}
-	return mapToSubscription(vs)
+	s, err := mapToSubscription(vs)
+	if err != nil {
+		return nil, err
+	}
+	s.id = id
+	return s, nil
 }
 
 func (sh *subscriptionsRedisHandler) Update(ctx context.Context, sub *Subscription) error {
