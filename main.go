@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	"log"
+	"fmt"
 	"os"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -27,34 +27,41 @@ func main() {
 	bh, err := binn.NewBottlesRedisHandler(
 		ctx,
 		redis.NewClient(&redis.Options{
-			Network: "tcp",
-			Addr:    c.RedisAddr,
-			DB:      0,
+			Network:  "tcp",
+			Addr:     c.RedisAddr,
+			Username: c.RedisUsername,
+			Password: c.RedisPassword,
+			DB:       0,
 		}),
 		10,
 		c.BottleExpiration,
 	)
 	if err != nil {
-		log.Fatal(err)
+		l.Error(fmt.Sprintf("initializing bottles handler is failed: %v", err))
+		os.Exit(0)
 	}
 	sh := binn.NewSubscriptionsRedisHandler(
 		redis.NewClient(&redis.Options{
-			Network: "tcp",
-			Addr:    c.RedisAddr,
-			DB:      1,
+			Network:  "tcp",
+			Addr:     c.RedisAddr,
+			Username: c.RedisUsername,
+			Password: c.RedisPassword,
+			DB:       1,
 		}),
 		c.SubscriptionExpiration,
 	)
 
 	bn := binn.NewBinn(c.SendInterval, bh, sh)
 
-	key, err := jwk.FromRaw([]byte("test-key"))
+	key, err := jwk.FromRaw([]byte(c.AuthKey))
 	if err != nil {
-		log.Fatal(err)
+		l.Error(fmt.Sprintf("initializing auth key is failed: %v", err))
+		os.Exit(0)
 	}
 	provider := auth.NewJWTProvider(key, c.SubscriptionExpiration)
-	srv := server.New(bn, provider, ":8080", l)
+	srv := server.New(bn, provider, fmt.Sprintf(":%s", c.Port), l)
 	if err := srv.ListenAndServe(); err != nil {
-		log.Fatal(err)
+		l.Error(fmt.Sprintf("running server is failed: %v", err))
+		os.Exit(0)
 	}
 }

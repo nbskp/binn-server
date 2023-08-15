@@ -9,35 +9,63 @@ import (
 )
 
 const (
+	envPort = "PORT"
+
 	envSendInterval           = "BINN_SEND_INTERVAL_SEC"
 	envBottleExpiration       = "BINN_BOTTLE_EXPIRATION_SEC"
 	envSubscriptionExpiration = "BINN_SUBSCRIPTION_EXPIRATION_SEC"
-	envRedisAddr              = "BINN_REDIS_ADDR"
+
+	envAuthKey = "AUTH_KEY"
+
+	envRedisAddr     = "REDIS_ADDR"
+	envRedisPassword = "REDIS_PASSWORD"
+	envRedisUsername = "REDIS_USERNAME"
 )
 
 var (
+	defaultPort                   = "8080"
 	defaultSendInterval           = 10 * time.Second
 	defaultBottleExpiration       = 60 * 10 * time.Second
 	defaultSubscriptionExpiration = 60 * 15 * time.Second
 )
 
 type Config struct {
+	Port string
+
 	SendInterval           time.Duration
 	BottleExpiration       time.Duration
 	SubscriptionExpiration time.Duration
 
-	RedisAddr string
+	AuthKey string
+
+	RedisAddr     string
+	RedisUsername string
+	RedisPassword string
 }
 
 func NewFromEnv(logger *slog.Logger) Config {
-	c := Config{}
+	return Config{
+		Port: loadPort(logger),
 
-	c.SendInterval = loadSendInterval(logger)
-	c.BottleExpiration = loadBottleExpiration(logger)
-	c.SubscriptionExpiration = loadSubscriptionExpiration(logger)
-	c.RedisAddr = loadRedisAddr(logger)
+		SendInterval:           loadSendInterval(logger),
+		BottleExpiration:       loadBottleExpiration(logger),
+		SubscriptionExpiration: loadBottleExpiration(logger),
 
-	return c
+		AuthKey: loadAuthKey(logger),
+
+		RedisAddr:     loadRedisAddr(logger),
+		RedisUsername: loadRedisUsername(logger),
+		RedisPassword: loadRedisPassword(logger),
+	}
+}
+
+func loadPort(logger *slog.Logger) string {
+	s := os.Getenv(envSendInterval)
+	if s == "" {
+		logger.Warn("cannot load port from env, use default")
+		return defaultPort
+	}
+	return s
 }
 
 func loadSendInterval(logger *slog.Logger) time.Duration {
@@ -67,6 +95,15 @@ func loadSubscriptionExpiration(logger *slog.Logger) time.Duration {
 	return time.Duration(i) * time.Second
 }
 
+func loadAuthKey(logger *slog.Logger) string {
+	s := os.Getenv(envAuthKey)
+	if s == "" {
+		logger.Error("cannot load auth key")
+		os.Exit(0)
+	}
+	return s
+}
+
 func loadRedisAddr(logger *slog.Logger) string {
 	s := os.Getenv(envRedisAddr)
 	if s == "" {
@@ -74,4 +111,12 @@ func loadRedisAddr(logger *slog.Logger) string {
 		os.Exit(0)
 	}
 	return s
+}
+
+func loadRedisUsername(logger *slog.Logger) string {
+	return os.Getenv(envRedisUsername)
+}
+
+func loadRedisPassword(logger *slog.Logger) string {
+	return os.Getenv(envRedisPassword)
 }
