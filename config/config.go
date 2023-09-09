@@ -55,7 +55,7 @@ func NewFromEnv(logger *slog.Logger) Config {
 
 		SendInterval:           loadSendInterval(logger),
 		BottleExpiration:       loadBottleExpiration(logger),
-		SubscriptionExpiration: loadBottleExpiration(logger),
+		SubscriptionExpiration: loadSubscriptionExpiration(logger),
 
 		AuthKey: loadAuthKey(logger),
 
