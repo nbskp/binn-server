@@ -49,6 +49,8 @@ func bottlesHandlerFunc(bn *binn.Binn, logger *slog.Logger) http.HandlerFunc {
 			getHf(w, r)
 		case http.MethodPost:
 			postHf(w, r)
+		case http.MethodOptions:
+			w.WriteHeader(http.StatusOK)
 		default:
 			w.WriteHeader(http.StatusMethodNotAllowed)
 		}

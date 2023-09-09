@@ -11,6 +11,10 @@ import (
 
 func AuthMiddleware(next http.Handler, provider auth.Provider, logger *slog.Logger) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodOptions {
+			next.ServeHTTP(w, r)
+			return
+		}
 		es := strings.Split(r.Header.Get("Authorization"), " ")
 		if len(es) != 2 {
 			w.WriteHeader(http.StatusUnauthorized)
