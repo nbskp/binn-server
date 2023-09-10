@@ -78,6 +78,9 @@ func (bn *Binn) Publish(ctx context.Context, subID string, b *Bottle) error {
 	bottleIDs := []string{}
 	for _, bottleID := range sub.bottleIDs {
 		if bottleID == b.ID {
+			if err := bn.bh.Set(ctx, b); err != nil {
+				return err
+			}
 			isFound = true
 		} else {
 			bottleIDs = append(bottleIDs, bottleID)

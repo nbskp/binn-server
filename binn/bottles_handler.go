@@ -196,11 +196,10 @@ func (h *bottlesRedisHandler) Set(ctx context.Context, b *Bottle) error {
 		}
 		return err
 	}
-	key := bottleKey(b.ID)
-	if _, err := h.cli.Del(ctx, key).Result(); err != nil {
+	if _, err := h.cli.Del(ctx, bottleShadowKey(b.ID)).Result(); err != nil {
 		return err
 	}
-	if _, err := h.cli.HSet(ctx, key, "msg", b.Msg).Result(); err != nil {
+	if _, err := h.cli.HSet(ctx, bottleKey(b.ID), "msg", b.Msg).Result(); err != nil {
 		return err
 	}
 	return nil
