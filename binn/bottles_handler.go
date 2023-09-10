@@ -10,9 +10,10 @@ import (
 )
 
 type bottlesRedisHandler struct {
-	cli  *redis.Client
-	exp  time.Duration
-	size int
+	cli       *redis.Client
+	exp       time.Duration
+	size      int
+	maxMsgLen int
 }
 
 func bottleID(n int) string {
@@ -28,6 +29,10 @@ func bottleShadowKey(id string) string {
 }
 
 func (h *bottlesRedisHandler) Set(ctx context.Context, b *Bottle) error {
+	// https://zenn.dev/kenghaya/articles/1f6935419e0f21
+	if len([]rune(b.Msg)) > h.maxMsgLen {
+		return NewBinnError(CodeMsgExceedMaxLength, "msg exceed max length", nil)
+	}
 	_, err := h.cli.HGetAll(ctx, bottleShadowKey(b.ID)).Result()
 	if err != nil {
 		if err == redis.Nil {
@@ -79,7 +84,7 @@ func (h *bottlesRedisHandler) Next(ctx context.Context) (*Bottle, error) {
 	return b, nil
 }
 
-func NewBottlesRedisHandler(ctx context.Context, cli *redis.Client, size int, exp time.Duration) (*bottlesRedisHandler, error) {
+func NewBottlesRedisHandler(ctx context.Context, cli *redis.Client, size int, exp time.Duration, maxMsgLen int) (*bottlesRedisHandler, error) {
 	ks, err := cli.Keys(ctx, "bottle:*").Result()
 	if err != nil {
 		return nil, err
@@ -93,8 +98,9 @@ func NewBottlesRedisHandler(ctx context.Context, cli *redis.Client, size int, ex
 		}
 	}
 	return &bottlesRedisHandler{
-		cli:  cli,
-		exp:  exp,
-		size: size,
+		cli:       cli,
+		exp:       exp,
+		size:      size,
+		maxMsgLen: maxMsgLen,
 	}, nil
 }

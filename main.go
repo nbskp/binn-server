@@ -35,6 +35,7 @@ func main() {
 		}),
 		c.NumBottles,
 		c.BottleExpiration,
+		c.MaxMsgLength,
 	)
 	if err != nil {
 		l.Error(fmt.Sprintf("initializing bottles handler is failed: %v", err))

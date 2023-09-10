@@ -15,6 +15,7 @@ const (
 	envBottleExpiration       = "BINN_BOTTLE_EXPIRATION_SEC"
 	envSubscriptionExpiration = "BINN_SUBSCRIPTION_EXPIRATION_SEC"
 	envNumBottles             = "BINN_NUM_BOTTLES"
+	envMaxMsgLength           = "BINN_MAX_MSG_LENGTH"
 
 	envAuthKey = "AUTH_KEY"
 
@@ -29,6 +30,7 @@ var (
 	defaultPort                   = "8080"
 	defaultSendInterval           = 10 * time.Second
 	defaultNumBottles             = 10
+	defaultMaxMsgLength           = 150
 	defaultBottleExpiration       = 60 * 10 * time.Second
 	defaultSubscriptionExpiration = 60 * 15 * time.Second
 	defaultRedisBottleDB          = 0
@@ -42,6 +44,7 @@ type Config struct {
 	BottleExpiration       time.Duration
 	SubscriptionExpiration time.Duration
 	NumBottles             int
+	MaxMsgLength           int
 
 	AuthKey string
 
@@ -60,6 +63,7 @@ func NewFromEnv(logger *slog.Logger) Config {
 		BottleExpiration:       loadBottleExpiration(logger),
 		SubscriptionExpiration: loadSubscriptionExpiration(logger),
 		NumBottles:             loadNumBottles(logger),
+		MaxMsgLength:           loadMaxMsgLength(logger),
 
 		AuthKey: loadAuthKey(logger),
 
@@ -112,6 +116,15 @@ func loadNumBottles(logger *slog.Logger) int {
 	if err != nil {
 		logger.Warn("cannot load num of bottles from env, use default")
 		return defaultNumBottles
+	}
+	return i
+}
+
+func loadMaxMsgLength(logger *slog.Logger) int {
+	i, err := strconv.Atoi(os.Getenv(envMaxMsgLength))
+	if err != nil {
+		logger.Warn("cannot load max lenght of msg from env, use default")
+		return defaultMaxMsgLength
 	}
 	return i
 }

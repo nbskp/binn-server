@@ -6,6 +6,7 @@ const (
 	CodeExpiredSubscription      = iota
 	CodeNotFoundSubscription     = iota
 	CodeNotFoundSubscribedBottle = iota
+	CodeMsgExceedMaxLength       = iota
 
 	CodeExpiredBottle     = iota
 	CodeNotFoundBottle    = iota
