@@ -14,6 +14,7 @@ const (
 	envSendInterval           = "BINN_SEND_INTERVAL_SEC"
 	envBottleExpiration       = "BINN_BOTTLE_EXPIRATION_SEC"
 	envSubscriptionExpiration = "BINN_SUBSCRIPTION_EXPIRATION_SEC"
+	envNumBottles             = "BINN_NUM_BOTTLES"
 
 	envAuthKey = "AUTH_KEY"
 
@@ -27,6 +28,7 @@ const (
 var (
 	defaultPort                   = "8080"
 	defaultSendInterval           = 10 * time.Second
+	defaultNumBottles             = 10
 	defaultBottleExpiration       = 60 * 10 * time.Second
 	defaultSubscriptionExpiration = 60 * 15 * time.Second
 	defaultRedisBottleDB          = 0
@@ -39,6 +41,7 @@ type Config struct {
 	SendInterval           time.Duration
 	BottleExpiration       time.Duration
 	SubscriptionExpiration time.Duration
+	NumBottles             int
 
 	AuthKey string
 
@@ -56,6 +59,7 @@ func NewFromEnv(logger *slog.Logger) Config {
 		SendInterval:           loadSendInterval(logger),
 		BottleExpiration:       loadBottleExpiration(logger),
 		SubscriptionExpiration: loadSubscriptionExpiration(logger),
+		NumBottles:             loadNumBottles(logger),
 
 		AuthKey: loadAuthKey(logger),
 
@@ -101,6 +105,15 @@ func loadSubscriptionExpiration(logger *slog.Logger) time.Duration {
 		return defaultSubscriptionExpiration
 	}
 	return time.Duration(i) * time.Second
+}
+
+func loadNumBottles(logger *slog.Logger) int {
+	i, err := strconv.Atoi(os.Getenv(envNumBottles))
+	if err != nil {
+		logger.Warn("cannot load num of bottles from env, use default")
+		return defaultNumBottles
+	}
+	return i
 }
 
 func loadAuthKey(logger *slog.Logger) string {

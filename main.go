@@ -33,7 +33,7 @@ func main() {
 			Password: c.RedisPassword,
 			DB:       c.RedisBottleDB,
 		}),
-		10,
+		c.NumBottles,
 		c.BottleExpiration,
 	)
 	if err != nil {
