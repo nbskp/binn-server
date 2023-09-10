@@ -5,12 +5,13 @@ services:
     ports:
       - 8080:8080
     command: "/binn"
-  mysql:
-    image: mysql:8.0.34
     environment:
-      - MYSQL_DATABASE: binn
-      - MYSQL_ROOT_PASSWORD: root
-      - MYSQL_USER: binn
-      - MYSQL_PASSWORD: binn
+      - TZ=Asia/Tokyo
+      - AUTH_KEY=auth_key
+      - REDIS_ADDR=redis:6379
+    depends_on:
+      - redis
+  redis:
+    image: redis:7.0.12
     ports:
-      - 3307:3306
+      - 6380:6379
