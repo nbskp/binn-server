@@ -8,7 +8,7 @@ import (
 
 type bottlesResponse struct {
 	ID        string    `json:"id"`
-	Msg       string    `json:"message"`
+	Msg       string    `json:"msg"`
 	ExpiredAt time.Time `json:"expired_at"`
 }
 
