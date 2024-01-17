@@ -3,5 +3,5 @@
 *.log
 tmp/
 
-/db/data/*
-!/db/data/.gitkeep
+/data/mysql/data/*
+!/data/mysql/data/.gitkeep

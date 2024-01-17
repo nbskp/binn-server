@@ -4,40 +4,14 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/google/uuid"
-	"github.com/nbskp/binn-server/auth"
 	"github.com/nbskp/binn-server/binn"
-	"github.com/nbskp/binn-server/ctxutil"
-	"github.com/nbskp/binn-server/server/middleware"
 	"golang.org/x/exp/slog"
 )
 
-func NewBottlesMux(bn *binn.Binn, provider auth.Provider, logger *slog.Logger) *http.ServeMux {
+func NewBottlesMux(bn *binn.Binn, logger *slog.Logger) *http.ServeMux {
 	r := http.NewServeMux()
-	r.Handle("/", middleware.AuthMiddleware(http.HandlerFunc(bottlesHandlerFunc(bn, logger)), provider, logger))
+	r.Handle("/", http.HandlerFunc(bottlesHandlerFunc(bn, logger)))
 	return r
-}
-
-func subscribeBottlesHandler(bn *binn.Binn, provider auth.Provider, logger *slog.Logger) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodPost {
-			w.WriteHeader(http.StatusMethodNotAllowed)
-			return
-		}
-		subID := uuid.New().String()
-		token, err := provider.Issue(r.Context(), subID)
-		if err != nil {
-			logger.ErrorCtx(r.Context(), err.Error())
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-		bn.Subscribe(r.Context(), subID)
-		if err := json.NewEncoder(w).Encode(newSubscribeBottlesResponse(token)); err != nil {
-			logger.ErrorCtx(r.Context(), err.Error())
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-	})
 }
 
 func bottlesHandlerFunc(bn *binn.Binn, logger *slog.Logger) http.HandlerFunc {
@@ -59,8 +33,7 @@ func bottlesHandlerFunc(bn *binn.Binn, logger *slog.Logger) http.HandlerFunc {
 
 func getBottlesHandlerFunc(bn *binn.Binn, logger *slog.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		subID := ctxutil.SubscriptionID(r.Context())
-		b, err := bn.GetBottle(r.Context(), subID)
+		b, err := bn.Get(r.Context())
 		if err != nil {
 			logger.ErrorCtx(r.Context(), err.Error())
 			handleError(w, err, http.StatusInternalServerError)
@@ -89,8 +62,7 @@ func postBottlesHandlerFunc(bn *binn.Binn, logger *slog.Logger) http.HandlerFunc
 			return
 		}
 		b := reqBody.toBottles()
-		subID := ctxutil.SubscriptionID(r.Context())
-		if err := bn.Publish(r.Context(), subID, b); err != nil {
+		if err := bn.Set(r.Context(), b); err != nil {
 			logger.ErrorCtx(r.Context(), err.Error())
 			handleError(w, err, http.StatusInternalServerError)
 			return
