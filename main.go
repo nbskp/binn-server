@@ -17,9 +17,10 @@ import (
 
 const (
 	envPort         = "PORT"
+	envTokenLength  = "BINN_TOKEN_LENGTH"
 	envMaxMsgLength = "BINN_MAX_MSG_LENGTH"
 
-	envMySQLDatabase = "MYSQL_Database"
+	envMySQLDatabase = "MYSQL_DATABASE"
 	envMySQLUser     = "MYSQL_USER"
 	envMySQLPassword = "MYSQL_PASSWORD"
 	envMySQLAddr     = "MYSQL_ADDR"
@@ -27,6 +28,7 @@ const (
 
 const (
 	defaultPort         = "8080"
+	defaultTokenLength  = 32
 	defaultMaxMsgLength = 150
 )
 
@@ -54,6 +56,7 @@ func main() {
 		Collation: "utf8mb4_unicode_ci",
 		Loc:       loc,
 	}
+	fmt.Println(c.FormatDSN())
 	db, err := sqlx.Connect("mysql", c.FormatDSN())
 	if err != nil {
 		l.Error(fmt.Sprintf("connect mysql: %v", err))
@@ -68,7 +71,15 @@ func main() {
 		maxMsgLength = i
 	}
 
-	bn := binn.NewBinn(db, maxMsgLength)
+	var tokenLength int
+	if i, err := strconv.Atoi(os.Getenv(envMaxMsgLength)); err != nil {
+		l.Warn(fmt.Sprintf("token length use default value %s", defaultMaxMsgLength))
+		tokenLength = defaultTokenLength
+	} else {
+		tokenLength = i
+	}
+
+	bn := binn.NewBinn(db, tokenLength, maxMsgLength)
 
 	port := os.Getenv(envPort)
 	if port == "" {
